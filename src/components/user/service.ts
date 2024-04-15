@@ -3,13 +3,13 @@ import { User, UserModel } from './model';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../../enums'
 
-export class TrainerService extends DefaultService<User, UserModel> {
+export class TrainerService extends DefaultService<UserModel> {
     constructor() {
         // Pass an instance of TrainerModel to the DefaultService constructor
         super(new UserModel());
     }
 
-    loginUser = async ({body}: {body: any}, locals: any) => {
+    loginUser = async ({body, locals}: {body: any, locals: any} ) => {
         let record = await this.model.getByPhone(body.phoneNumber);
         
         // Create a new user if not found
@@ -28,12 +28,12 @@ export class TrainerService extends DefaultService<User, UserModel> {
         // Update user as logged in
 
         // Generate JWT token
-        const token = jwt.sign({id: record.id, role: UserRole.USER }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+        const token = jwt.sign({id: record.id, role: UserRole.USER }, process.env.JWT_SECRET as string);
 
         return { token, record };
     };
 
-    logoutUser = async ({body, params, query}: {body: any, params: any, query: any}, locals: any) => {
+    logoutUser = async ({body, params, query, locals}: {body: any, params: any, query: any, locals: any}) => {
         const userId = locals.user.id;
         const record = await this.model.getById(userId);
 

@@ -5,7 +5,7 @@ import { ValidationChain } from 'express-validator';
 import { DefaultService } from './service';
 import { DefaultModel } from './model';
 
-type serviceType = (({ body, params, query }: { body: Record<string, any>; params: Record<string, any>; query: Record<string, any>; }, locals: Record<string, any>) => any);
+type serviceType = (({ body, params, query, locals }: { body: Record<string, any>; params: Record<string, any>; query: Record<string, any>; locals: Record<string, any>;}) => any);
 export class RouteConfig
 {
     constructor(
@@ -24,9 +24,9 @@ export class RouteManager<M extends DefaultModel> {
     constructor(service: DefaultService<M>) {
         this.#endpoint = {
             getAll: new RouteConfig('/', service.getAll, [], [UserRole.ADMIN], 'get'),
-            getById: new RouteConfig('/:id', service.getById, [], [UserRole.ADMIN], 'get'),
+            getById: new RouteConfig('/:id', service.getById, [], [UserRole.ADMIN, UserRole.TRAINER], 'get'),
             create: new RouteConfig('/', service.create, [], [UserRole.ADMIN], 'post'),
-            update: new RouteConfig('/:id', service.update, [], [UserRole.ADMIN], 'put'),
+            update: new RouteConfig('/:id', service.update, [], [UserRole.ADMIN, UserRole.TRAINER], 'put'),
             delete: new RouteConfig('/:id', service.delete, [], [UserRole.ADMIN], 'delete')
         };
     }

@@ -6,11 +6,12 @@ export const handleService = (serviceFunction: (params: {
     query: Record<string, any>; // Define the type for query if necessary
     params: Record<string, any>; // Define the type for params if necessary
     body: Record<string, any>; // Define the type for body if necessary
-}, locals: Record<string, any>) => Promise<any>) => {
+    locals: Record<string, any>;
+}) => Promise<any>) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             // Call the service function with query, params, and body from the request
-            const result = await serviceFunction({query: req.query, params: req.params, body: req.body}, res.locals);
+            const result = await serviceFunction({query: req.query, params: req.params, body: req.body, locals: res.locals});
 
             // Send the result as the response
             res.json(result);

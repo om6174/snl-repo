@@ -10,11 +10,11 @@ export interface User {
     numberOfDevices: number;
 }
 
-export class UserModel extends DefaultModel<User> {
+export class UserModel extends DefaultModel {
     constructor() {
         super('user');
     }
 
-    getByPhone = async (phoneNumber: string): Promise<User | null> => this.getOne({ phoneNumber });
+    getByPhone = async (phoneNumber: string) => this.getOne({ phoneNumber });
 }
 

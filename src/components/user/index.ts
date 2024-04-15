@@ -1,11 +1,11 @@
-// import { handleService } from '../../middleware';
-// import {TrainerService} from './service';
-// import createCrudRoutes from '../default/routes';
+import {TrainerService} from './service';
+import {RouteConfig, RouteManager} from '../default/routes';
+import { UserRole } from '../../enums';
 
-// const service = new TrainerService();
+const service = new TrainerService();
 
-// const router = createCrudRoutes(service);
-// router.post('/login', handleService(service.loginUser));
-// router.post('/logout', handleService(service.logoutUser));
+const routeManager = new RouteManager(service);
+routeManager.setEndpoint = new RouteConfig('/login', service.loginUser, [], [], 'post');
+routeManager.setEndpoint = new RouteConfig('/logout', service.logoutUser, [], [UserRole.USER], 'post');
 
-// export default router;
+export default routeManager.router;

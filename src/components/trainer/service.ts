@@ -32,7 +32,7 @@ export class TrainerService extends DefaultService<TrainerModel> {
         return token;
     };
     
-    logout = async ({body, params, query}: {body: any, params: any, query: any}, locals: any) => {
+    logout = async ({body, params, query, locals}: {body: any, params: any, query: any, locals: any}, ) => {
     
         const record = await this.model.getById(locals.user.id);
         if (!record) throw new Error("No trainer with given contact number.");

@@ -1,6 +1,6 @@
 import express, { urlencoded } from 'express';
 import trainerRoutes from './src/components/trainer';
-//import userRoutes from './src/components/user';
+import userRoutes from './src/components/user';
 
 require('dotenv').config();
 const app = express();
@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(urlencoded())
 // Use the trainer routes under the '/api/trainers' path
 app.use('/api/trainer', trainerRoutes);
-//app.use('/api/user', userRoutes);
+app.use('/api/user', userRoutes);
 
 app.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
