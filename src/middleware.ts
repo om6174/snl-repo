@@ -27,6 +27,9 @@ export const handleService = (serviceFunction: (params: {
 
 export function authenticateMiddleware(allowedRoles: number[]){
     return function (req: Request, res: Response, next: NextFunction, ) {
+        if(allowedRoles.length === 0){
+            return next();
+        }
         // Extract the token from the request headers
         const token = req.headers.authorization;
     

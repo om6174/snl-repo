@@ -1,20 +1,22 @@
+import { TrainerStatus } from '../../enums';
 import { DefaultService } from '../default/service';
-import { Trainer, TrainerModel, TrainerStatus } from './model';
+import { TrainerModel } from './model';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-export class TrainerService extends DefaultService<Trainer, TrainerModel> {
+export class TrainerService extends DefaultService<TrainerModel> {
     constructor() {
         // Pass an instance of TrainerModel to the DefaultService constructor
         super(new TrainerModel());
     }
+
 
     create = async ({body}: {body: any}) => {
         body.password = bcrypt.hashSync(body.password, 10)
         return this.model.create(body);
     }
 
-    loginTrainer = async ({body, params, query}: {body: any, params: any, query: any}) => {
+    login = async ({body, params, query}: {body: any, params: any, query: any}) => {
 
         const record = await this.model.getByPhone(body.phoneNumber);
         if (!record) throw new Error("No trainer with given contact number.");
@@ -30,7 +32,7 @@ export class TrainerService extends DefaultService<Trainer, TrainerModel> {
         return token;
     };
     
-    logoutTrainer = async ({body, params, query}: {body: any, params: any, query: any}, locals: any) => {
+    logout = async ({body, params, query}: {body: any, params: any, query: any}, locals: any) => {
     
         const record = await this.model.getById(locals.user.id);
         if (!record) throw new Error("No trainer with given contact number.");

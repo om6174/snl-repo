@@ -1,3 +1,4 @@
+import { TrainerStatus } from '../../enums';
 import { DefaultModel } from '../default/model';
 
 export type Trainer = {
@@ -13,13 +14,7 @@ export type Trainer = {
     updatedAt: Date;
 }
 
-export enum TrainerStatus {
-    LOGGED_IN = 1,
-    LOGGED_OUT = 2,
-    DISABLED = 3
-}
-
-export class TrainerModel extends DefaultModel<Trainer> {
+export class TrainerModel extends DefaultModel {
     constructor() {
         super('trainer');
     }

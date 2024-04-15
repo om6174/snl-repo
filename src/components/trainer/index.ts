@@ -1,21 +1,13 @@
-import { handleService } from '../../middleware';
 import {TrainerService} from './service';
 import { RouteManager, RouteConfig } from '../default/routes';
 import { UserRole } from '../../enums';
 
 
 const service = new TrainerService();
-
-
 const routeManager = new RouteManager(service);
-routeManager.addRouteConfig('login', new RouteConfig('/login', service.loginTrainer, [], [], 'post'))
-routeManager.addRouteConfig('logout', new RouteConfig('/logout', service.logoutTrainer, [], [], 'post'))
 
-// let endpoints = createCRUD(service)
-// endpoints['getAll'].roles = [UserRole.TRAINER, UserRole.ADMIN]
-// const router = createCrudRoutes(endpoints);
+routeManager.setEndpoint = new RouteConfig('/login', service.login, [], [], 'post');
+routeManager.setEndpoint = new RouteConfig('/logout', service.logout, [], [], 'post');
+routeManager.setEndpoint = new RouteConfig('/', service.getAll, [], [], 'get')
 
-// router.post('/login', handleService(service.loginTrainer));
-// router.post('/logout', handleService(service.logoutTrainer));
-
-export default routeManager.createRoutes();
+export default routeManager.router;
