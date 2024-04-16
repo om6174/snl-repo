@@ -9,3 +9,13 @@ export enum TrainerStatus {
     LOGGED_OUT = 2,
     DISABLED = 3
 }
+
+export enum VariationStatus {
+    LIVE = 1,
+    ARCHIVED = 2,
+}
+
+export enum GameplayStatus {
+    LIVE = 1,
+    ARCHIVED = 2,
+}

@@ -1,3 +1,4 @@
+import { ServiceType } from '../../types';
 import { DefaultModel } from './model';
 
 export class DefaultService<M extends DefaultModel> {
@@ -7,23 +8,23 @@ export class DefaultService<M extends DefaultModel> {
         this.model = model;
     }
 
-    getAll = async (): Promise<Record<string, any>[]> => {
-        return this.model.getAll();
+    getAll = async ({query}: ServiceType): Promise<Record<string, any>[]> => {
+        return this.model.getAll(query);
     };
     
-    getById = async ({params}: {params: any}): Promise<Record<string, any> | null> => {
+    getById = async ({params}: ServiceType): Promise<Record<string, any> | null> => {
         return this.model.getById(params.id);
     };
     
-    create = async ({body}: {body: any}): Promise<Record<string, any>> => {
+    create = async ({body}: ServiceType): Promise<Record<string, any>> => {
         return this.model.create(body);
     };
     
-    update = async ({body, params}: {body: Record<string, any>, params: any}): Promise<Record<string, any> | null> => {
+    update = async ({body, params}: ServiceType): Promise<Record<string, any> | null> => {
         return this.model.update(params.id, body);
     };
     
-    delete = async ({params}: {params: any}): Promise<number> => {
+    delete = async ({params}: ServiceType): Promise<boolean> => {
         return this.model.delete(params.id);
     };
     

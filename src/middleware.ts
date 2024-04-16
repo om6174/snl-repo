@@ -1,17 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { ServiceType } from './types';
+import { validationResult } from 'express-validator';
+import multer from 'multer';
+import path from 'path';
+
+const storage = multer.diskStorage({
+  destination: (req: any, file: any, cb: any) => {
+    cb(null, "uploads/")
+  },
+  filename: (req, file, cb) => {
+    // Extract the file extension from the original file name
+    const fileExtension = path.extname(file.originalname);
+
+    // Construct the new file name with timestamp and file type from params
+    const newFileName = `${Date.now()}-${req.params.fileType}${fileExtension}`;
+
+    // Callback with the new file name
+    cb(null, newFileName);
+}
+})
+
+// Create and export the Multer instance with the configured storage
+export const upload = multer({ storage });
 
 // Middleware function that passes query, params, and body to the service function
-export const handleService = (serviceFunction: (params: {
-    query: Record<string, any>; // Define the type for query if necessary
-    params: Record<string, any>; // Define the type for params if necessary
-    body: Record<string, any>; // Define the type for body if necessary
-    locals: Record<string, any>;
-}) => Promise<any>) => {
+export const handleService = (serviceFunction: (params: ServiceType) => Promise<any>) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                // If there are validation errors, return a 400 Bad Request response
+                return res.status(400).json({ errors: errors.array() });
+            }
             // Call the service function with query, params, and body from the request
-            const result = await serviceFunction({query: req.query, params: req.params, body: req.body, locals: res.locals});
+            const result = await serviceFunction({query: req.query, params: req.params, body: req.body, locals: res.locals, files: req.files});
 
             // Send the result as the response
             res.json(result);
@@ -48,6 +71,7 @@ export function authenticateMiddleware(allowedRoles: number[]){
             }
             // Attach the decoded payload to the request object
             res.locals.user = decoded.id;
+            res.locals.role = decoded.role;
     
             // Move to the next middleware
             next();

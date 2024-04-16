@@ -2,6 +2,7 @@ import { DefaultService } from '../default/service';
 import { User, UserModel } from './model';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../../enums'
+import { ServiceType } from '../../types';
 
 export class TrainerService extends DefaultService<UserModel> {
     constructor() {
@@ -9,7 +10,7 @@ export class TrainerService extends DefaultService<UserModel> {
         super(new UserModel());
     }
 
-    loginUser = async ({body, locals}: {body: any, locals: any} ) => {
+    loginUser = async ({body, locals}: ServiceType ) => {
         let record = await this.model.getByPhone(body.phoneNumber);
         
         // Create a new user if not found
@@ -33,7 +34,7 @@ export class TrainerService extends DefaultService<UserModel> {
         return { token, record };
     };
 
-    logoutUser = async ({body, params, query, locals}: {body: any, params: any, query: any, locals: any}) => {
+    logoutUser = async ({body, params, query, locals}: ServiceType) => {
         const userId = locals.user.id;
         const record = await this.model.getById(userId);
 

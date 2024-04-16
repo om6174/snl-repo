@@ -1,4 +1,5 @@
-import { TrainerStatus } from '../../enums';
+import { TrainerStatus, UserRole } from '../../enums';
+import { ServiceType } from '../../types';
 import { DefaultService } from '../default/service';
 import { TrainerModel } from './model';
 import bcrypt from 'bcrypt';
@@ -10,13 +11,26 @@ export class TrainerService extends DefaultService<TrainerModel> {
         super(new TrainerModel());
     }
 
-
-    create = async ({body}: {body: any}) => {
-        body.password = bcrypt.hashSync(body.password, 10)
+    getAll = async ({ query, locals }: ServiceType): Promise<Record<string, any>[]> => {
+        if(locals.role === UserRole.TRAINER){
+            return this.model.getAll({id: locals.user})
+        }else{
+            return this.model.getAll(query)
+        }
+    };
+    create = async ({body, locals}: ServiceType) => {
+        body.password = bcrypt.hashSync(body.password, 10);
+        body.createdBy = locals.user;
         return this.model.create(body);
     }
 
-    login = async ({body, params, query}: {body: any, params: any, query: any}) => {
+    update = async ({params, body}: ServiceType) => {
+        if(body.password)
+        body.password = bcrypt.hashSync(body.password, 10)
+        return this.model.update(params.id, body);
+    }
+
+    login = async ({body, params, query}: ServiceType) => {
 
         const record = await this.model.getByPhone(body.phoneNumber);
         if (!record) throw new Error("No trainer with given contact number.");
@@ -29,10 +43,10 @@ export class TrainerService extends DefaultService<TrainerModel> {
     
         await this.model.update(record.id, { isLoggedIn: true });
 
-        return token;
+        return {token, type: record.type, id: record.id};
     };
     
-    logout = async ({body, params, query, locals}: {body: any, params: any, query: any, locals: any}, ) => {
+    logout = async ({body, params, query, locals}: ServiceType ) => {
     
         const record = await this.model.getById(locals.user.id);
         if (!record) throw new Error("No trainer with given contact number.");

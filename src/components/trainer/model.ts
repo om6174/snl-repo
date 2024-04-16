@@ -7,6 +7,7 @@ export type Trainer = {
     phoneNumber: string;
     password: string;
     createdBy: number;
+    uniqueId: string;
     type: number;
     status: TrainerStatus;
     isLoggedIn: boolean;
