@@ -15,6 +15,6 @@ export class UserModel extends DefaultModel {
         super('user');
     }
 
-    getByPhone = async (phoneNumber: string) => this.getOne({ phoneNumber });
+    getByPhone = async (phoneNumber: string, gameId: string) => this.getOne({ phoneNumber, gameId });
 }
 

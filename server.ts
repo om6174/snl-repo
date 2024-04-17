@@ -5,11 +5,13 @@ import variationRoutes from './src/components/variation';
 import gameplayRoutes from './src/components/gameplay';
 import { upload } from './src/middleware';
 import path from 'path';
+import { setupSocket} from './src/config/socket';
 
 require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+const httpServer = setupSocket(app);
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -44,6 +46,6 @@ app.get("/download/:filePath", (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Listening on port: ${PORT}`);
 });

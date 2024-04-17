@@ -3,6 +3,7 @@ import { User, UserModel } from './model';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../../enums'
 import { ServiceType } from '../../types';
+import { io } from '../../config/socket';
 
 export class TrainerService extends DefaultService<UserModel> {
     constructor() {
@@ -10,28 +11,29 @@ export class TrainerService extends DefaultService<UserModel> {
         super(new UserModel());
     }
 
-    loginUser = async ({body, locals}: ServiceType ) => {
-        let record = await this.model.getByPhone(body.phoneNumber);
+    loginUser = async ({ body, params }: ServiceType) => {        
+        let record = await this.model.getByPhone(body.phoneNumber, params.gameId);
         
-        // Create a new user if not found
         if (!record) {
             record = await this.model.create({
                 name: body.name,
                 phoneNumber: body.phoneNumber,
                 status: 1,
-                numberOfDevices: 1
+                numberOfDevices: 1,
+                gameId: params.gameId,
+                isLoggedIn: true,
             });
-
-        }else{
-            record = await this.model.update(record.id as number, {numberOfDevices: record.numberOfDevices + 1})
+        } else {
+            record = await this.model.update(record.id, {
+                numberOfDevices: record.numberOfDevices + 1,
+            });
+        }
+    
+        if (io) {
+            io.to(params.gameId).emit('userJoined', record);
         }
 
-        // Update user as logged in
-
-        // Generate JWT token
-        const token = jwt.sign({id: record.id, role: UserRole.USER }, process.env.JWT_SECRET as string);
-
-        return { token, record };
+        return record;
     };
 
     logoutUser = async ({body, params, query, locals}: ServiceType) => {

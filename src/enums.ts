@@ -18,4 +18,7 @@ export enum VariationStatus {
 export enum GameplayStatus {
     LIVE = 1,
     ARCHIVED = 2,
+    STARTED = 3,
+    FINISHED = 4,
+    PAUSED = 5
 }
