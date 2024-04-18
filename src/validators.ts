@@ -61,11 +61,11 @@ export const validateCreateVariation = [
 ];
 
 export const validateUpdateVariation = [
-    body('timePerMove').optional().isInt().withMessage('TimePerMove must be an integer if provided'),
     body('gameType').optional().notEmpty().withMessage('GameType cannot be empty if provided'),
-    body('customId').optional().isInt().withMessage('CustomId must be an integer if provided'),
-    body('additionalDetails').optional().isJSON().withMessage('AdditionalDetails must be a valid JSON object if provided'),
-    body('banner').optional().isString().withMessage('Banner must be a string if provided'),
+    body('customId').optional().notEmpty().withMessage('CustomId cannot be empty if provided'),
+    body('additionalDetails').optional().isObject().withMessage('AdditionalDetails must be a valid object if provided'),
+    body('siteBanner').optional().isString().withMessage('siteBanner must be a valid string if provided'),
+    body('mobileBanner').optional().isString().withMessage('mobileBanner must be a valid string if provided'),
     body('variationName').optional().notEmpty().withMessage('VariationName cannot be empty if provided'),
     body('status').optional().notEmpty().withMessage('Status cannot be empty if provided')
 ];
