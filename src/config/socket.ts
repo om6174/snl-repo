@@ -1,40 +1,43 @@
 import express from 'express';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import http from 'http';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import knex from './knex';
 import { GameplayStatus } from '../enums';
-
+//cIdx: current player's index
 let snakes: Record<number, number>;
 let ladders: Record<number, number>;
 
-async function snl(){
-    const data = {
-        snakePositions: {
-          20: 18,
-          13: 7,
-          26: 16,
-          30: 11,
-          45: 34,
-          39: 21
-        },
-        ladderPositions: {
-          2: 21,
-          5: 18,
-          10: 29,
-          17: 36,
-          22: 38,
-          32: 49,
-          35: 44,
-          37: 43,
-        }
-      };
-  
-      // Insert data into the 'users' table
-      const [r] = await knex('snakesLadders').insert(data).returning('*');
-      snakes = JSON.parse(r.snakePositions);
-      ladders = JSON.parse(r.ladderPositions);
+async function snl()
+{
+    // const data = {
+    //     snakePositions: {
+    //         20: 18,
+    //         13: 7,
+    //         26: 16,
+    //         30: 11,
+    //         45: 34,
+    //         39: 21
+    //     },
+    //     ladderPositions: {
+    //         2: 21,
+    //         5: 18,
+    //         10: 29,
+    //         17: 36,
+    //         22: 38,
+    //         32: 49,
+    //         35: 44,
+    //         37: 43,
+    //     }
+    // };
 
+    // Insert data into the 'players' table
+    //const [r] = await knex('snakesLadders').insert(data).returning('*');
+    const r = await knex('snakesLadders').select().first('*');
+
+    snakes = JSON.parse(r.snakePositions);
+    ladders = JSON.parse(r.ladderPositions);
+    return true;
 }
 async function gameExists(gameId: string)
 {
@@ -44,19 +47,27 @@ async function gameExists(gameId: string)
         {
             builder
                 .where('status', GameplayStatus.LIVE)
-                .orWhere('status', GameplayStatus.STARTED);
+                .orWhere('status', GameplayStatus.STARTED)
+                .orWhere('status', GameplayStatus.PAUSED);
         })
         .first();
     return record;
 };
 
-async function hasGameStarted(gameId: string)
-{
-    const record = await knex('gameplay')
-        .where({ url: gameId, status: GameplayStatus.STARTED })
-        .first();
-    return !!record;
-};
+async function imageData(gameId: string) {
+    // Query the gameplay table to get the variation_id based on the given gameId and the gameplay status
+    const gameplayRecord = await knex('gameplay').where({ url: gameId}).first();
+
+    if (!gameplayRecord) {
+        return null;
+    }
+
+    const variationRecord = await knex('variation').where({ id: gameplayRecord.variationId }).first();
+
+    // Return the variation record
+    return variationRecord;
+}
+
 
 async function leaderboard(gameId: string)
 {
@@ -147,12 +158,218 @@ function disconnectAllSockets(gameId: string)
 let io: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
 const rooms: Record<string, any> = {}; // Keep track of the game rooms and their states
 
+async function handleSpectatorConnection(socket: Socket, gameId: string)
+{
+    try{
+    if(!gameId) throw new Error("gameId is required.");
+
+    const game = await gameExists(gameId);
+    if (!game) throw new Error("Invalid game.");
+
+    const room = rooms[gameId] ||= { players: [], cIdx: 0, sockets: [], ongoing: game.status === GameplayStatus.STARTED };
+    room.sockets.push(socket.id);
+
+    socket.join(gameId);
+    socket.emit('imageData', await imageData(gameId));
+
+    socket.emit('message', 'You are now spectating the game.');
+    if (rooms[gameId].ongoing === true) socket.emit('gameStarted', 'The game has already started.');
+    if (game.status === GameplayStatus.PAUSED) socket.emit('pause', 'Game has been paused.');
+
+    socket.on('start', async () =>
+    {
+        if (rooms[gameId].players.length === 0)
+        {
+            socket.emit('error', 'Atleast one participant is required to start the game.');
+            return;
+        }
+
+        console.log(`Game ${gameId} started`);
+        await updateGameStatus(gameId, GameplayStatus.STARTED);
+        socket.broadcast.to(gameId).emit('gameStarted', 'Game started.');
+
+        rooms[gameId].ongoing = true;
+        const firstPlayer = room.players[rooms[gameId].cIdx];
+        io.to(firstPlayer.sockets).emit('yourTurn');
+    });
+
+    socket.on('pause', async () =>
+    {
+        if (!rooms[gameId].ongoing)
+        {
+            socket.emit('error', "The game has not started yet.");
+            return;
+        };
+
+        console.log(`Game ${gameId} paused`);
+        await updateGameStatus(gameId, GameplayStatus.PAUSED);
+        room.ongoing = false;
+        socket.broadcast.to(gameId).emit('pause', 'Game has been paused.');
+        socket.emit('pause', 'You paused the game.');
+    });
+} catch (err: any)
+{
+    console.error(err);
+    socket.emit('error', err.message);
+    socket.disconnect(true);
+}
+
+}
+//TODO: add currentPlayerIndex to gameplay table
+async function handlePlayerConnection(socket: Socket, gameId: string, playerPhone: string, playerName: string)
+{
+    try{
+    if (!playerName || !playerPhone)
+    {
+        socket.emit('error', "Send a valid gameId, playerName, and playerPhone.");
+        socket.disconnect(true);
+        return;
+    }
+
+    let room = rooms[gameId];
+    if (!room)
+    {
+        const game = await gameExists(gameId);
+        if (!game) throw new Error("Invalid game.");
+        if (game.status === GameplayStatus.STARTED)
+        {
+            console.log(`Room ${gameId} was abandoned, game has been paused.`);
+            await updateGameStatus(gameId, GameplayStatus.PAUSED);
+            socket.emit('pause', 'Game has been paused.');
+        };
+        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false };
+    }else if(room.ongoing === false){
+        const game = await gameExists(gameId);
+        if (!game) throw new Error("Invalid game.");
+        if (game.status === GameplayStatus.PAUSED) socket.emit('pause', 'Game has been paused.');
+
+    }
+
+    let { user } = await createOrUpdateUser(playerName, playerPhone, gameId);
+
+    socket.join(gameId);
+    room.sockets.push(socket.id);
+    let userActive = room.players.find((user: any) => user.phoneNumber === playerPhone);
+
+    if (userActive)
+    {
+        userActive.sockets.push(socket.id);
+    } else
+    {
+        room.players.push({ ...user, sockets: [socket.id] });
+        socket.broadcast.to(gameId).emit('message', `User ${playerName} has joined the game.`,);
+    }
+
+    socket.emit('imageData', await imageData(gameId));
+
+    socket.on('rollDice', async () =>
+    {
+
+        if (!room.ongoing)
+        {
+            socket.emit('error', "The game has not started yet.");
+            return;
+        };
+
+        const currentPlayer = room.players[room.cIdx];
+
+        if (!currentPlayer.sockets.includes(socket.id))
+        {
+            socket.emit('error', 'Not your turn');
+            return;
+        }
+
+        const diceRoll = Math.floor(Math.random() * 6) + 1;
+
+        currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 50);
+
+        if (currentPlayer.score >= 50)
+        {
+            await updateScore(currentPlayer.id, currentPlayer.score, true);
+
+            // The current user has won the game
+            sendSeparateMessages(
+                currentPlayer.sockets,
+                gameId,
+                'Congratulations! You completed the game!',
+                `${currentPlayer.name} has finished.`
+            );
+
+            // Remove the current user from the game
+            room.players.splice(room.cIdx, 1);
+
+            if (room.players.length === 0)
+            {
+                io.to(gameId).emit('gameOver', await leaderboard(gameId));
+                await updateGameStatus(gameId, GameplayStatus.FINISHED);
+                disconnectAllSockets(gameId);
+                return;
+            }
+
+            room.cIdx = room.cIdx % room.players.length;
+        }
+        else
+        {
+            if (!snakes || !ladders)
+            {
+                await snl();
+            }
+            if (snakes[currentPlayer.score])
+            {
+                io.to(gameId).emit('factoid', currentPlayer.score)
+                currentPlayer.score = snakes[currentPlayer.score];
+                sendSeparateMessages(
+                    currentPlayer.sockets,
+                    gameId, 
+                    `You rolled a ${diceRoll} and got bitten by a snake. Now at ${currentPlayer.score}`,
+                    `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`
+                );
+            } else if (ladders[currentPlayer.score])
+            {
+                io.to(gameId).emit('factoid', currentPlayer.score)
+                currentPlayer.score = ladders[currentPlayer.score];
+                sendSeparateMessages(
+                    currentPlayer.sockets,
+                    gameId, 
+                    `You rolled a ${diceRoll} and climbed a ladder to position ${currentPlayer.score}`,
+                    `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`
+                );
+
+            }
+            else{
+                sendSeparateMessages(
+                    currentPlayer.sockets,
+                    gameId, 
+                    `You rolled a ${diceRoll}. Your current position is ${currentPlayer.score}.`,
+                    `${currentPlayer.name} rolled a ${diceRoll}.`
+                );
+            }
+            await updateScore(currentPlayer.id, currentPlayer.score);
+
+
+
+            room.cIdx = (room.cIdx + 1) % room.players.length;
+        }
+
+        const nextUser = room.players[room.cIdx];
+
+        // Notify the next user that it's their turn to roll the dice
+        io.to(nextUser.sockets).emit('yourTurn');
+    });
+} catch (err: any)
+{
+    console.error(err);
+    socket.emit('error', err.message);
+    socket.disconnect(true);
+}
+}
+
 export function setupSocket(app: express.Application): http.Server
 {
     // Create an HTTP server using the Express app
     const httpServer = http.createServer(app);
 
-    
+
     io = new Server(httpServer, {
         cors: {
             origin: '*',
@@ -167,143 +384,25 @@ export function setupSocket(app: express.Application): http.Server
 
         try
         {
-            // Extract userName, gameId, and phoneNumber from query parameters
-            const { userName, gameId, phoneNumber } = socket.handshake.query as { userName: string, gameId: string, phoneNumber: string };
-
-
-            if (!userName || !gameId || !phoneNumber)
+            const { type, gameId } = socket.handshake.query as { type: string, gameId: string };
+            if (!type || !gameId)
+                {
+                    socket.emit('error', "Send a valid gameId, type.");
+                    socket.disconnect(true);
+                    return;
+                }
+            if (type === 'spectator')
             {
-                socket.emit('error', "Send a valid gameId, userName, and phoneNumber.");
-                socket.disconnect(true);
+                handleSpectatorConnection(socket, gameId);
                 return;
             }
-            const game = await gameExists(gameId);
-            if (!game) throw new Error("Invalid game.");
-            // Check if the game state for this gameId already exists, if not create it
-            rooms[gameId] ||= { users: [], currentUserIndex: 0, sockets: [], hasGameStarted: game.status === GameplayStatus.STARTED };
-            if (game.status === GameplayStatus.STARTED) rooms[gameId].hasGameStarted = true;
-
-            // Check if the user exists in the database, or create a new user
-            let { user, isCreated } = await createOrUpdateUser(userName, phoneNumber, gameId);
-            if (isCreated)
+            else if (type === 'player')
             {
-                // Add the user to the game's state
+                const { playerPhone, playerName } = socket.handshake.query as { playerPhone: string, playerName: string };
+                handlePlayerConnection(socket, gameId, playerPhone, playerName);
 
-                // Notify all other users in the game room that a new user has joined
-                socket.broadcast.to(gameId).emit('message', `User ${userName} has joined the game.`,);
-            };
-
-            rooms[gameId].sockets.push(socket.id);
-            let userActive = rooms[gameId].users.find((user: any) => user.phoneNumber === phoneNumber);
-
-            if (userActive)
-            {
-                userActive.sockets.push(socket.id);
-            } else
-            {
-                rooms[gameId].users.push({ ...user, sockets: [socket.id] });
             }
 
-            // Join the socket to the specified game room
-            socket.join(gameId);
-
-
-            socket.on('rollDice', async () =>
-            {
-
-                const gameStarted = await hasGameStarted(gameId);
-                if (!rooms[gameId].hasGameStarted)
-                {
-                    socket.emit('error', "The game has not started yet.");
-                    return;
-                };
-
-                const currentUserIndex = rooms[gameId].currentUserIndex;
-                const currentUser = rooms[gameId].users[currentUserIndex];
-
-                if (!currentUser.sockets.includes(socket.id))
-                {
-                    socket.emit('error', 'Not your turn');
-                    return;
-                }
-
-                const diceRoll = Math.floor(Math.random() * 6) + 1;
-
-                currentUser.score = Math.min(currentUser.score + diceRoll, 100);
-
-                // Update the user's score in the database
-
-                if (currentUser.score >= 100)
-                {
-                    await updateScore(currentUser.id, currentUser.score, true);
-
-                    // The current user has won the game
-                    sendSeparateMessages(
-                        currentUser.sockets,
-                        gameId,
-                        'Congratulations! You have won the game!',
-                        `${currentUser.name} has finished.`
-                    );
-
-                    // Remove the current user from the game
-                    rooms[gameId].users.splice(currentUserIndex, 1);
-                    if (rooms[gameId].users.length === 0)
-                    {
-
-                        io.to(gameId).emit('gameOver', await leaderboard(gameId));
-                        await updateGameStatus(gameId, GameplayStatus.FINISHED);
-                        disconnectAllSockets(gameId);
-                        return;
-                    }
-                    rooms[gameId].currentUserIndex = currentUserIndex % rooms[gameId].users.length;
-                }
-                else
-                {
-                    if (!snakes || !ladders){
-                        await snl();
-                    }
-                    if(snakes[currentUser.score]){
-                        currentUser.score = snakes[currentUser.score]
-                    }else if(ladders[currentUser.score]){
-                        currentUser.score = ladders[currentUser.score]
-                    }
-                    await updateScore(currentUser.id, currentUser.score);
-
-                    sendSeparateMessages(
-                        currentUser.sockets,
-                        gameId, `You rolled a ${diceRoll}. 
-                    Your current position is ${currentUser.score}.`,
-                        `${currentUser.name} rolled a ${diceRoll}.`
-                    );
-
-                    rooms[gameId].currentUserIndex = (currentUserIndex + 1) % rooms[gameId].users.length;
-                }
-
-                const nextUser = rooms[gameId].users[rooms[gameId].currentUserIndex];
-
-                // Notify the next user that it's their turn to roll the dice
-                io.to(nextUser.sockets).emit('yourTurn');
-            });
-
-            socket.on('start', async () =>
-            {
-                console.log(`Game ${gameId} started`);
-                await updateGameStatus(gameId, GameplayStatus.STARTED);
-                rooms[gameId].hasGameStarted = true;
-                const firstUser = rooms[gameId].users[rooms[gameId].currentUserIndex];
-                io.to(firstUser.sockets).emit('yourTurn');
-            });
-
-            socket.on('pause', async () =>
-            {
-                console.log(`Game ${gameId} paused`);
-                await updateGameStatus(gameId, GameplayStatus.PAUSED);
-                rooms[gameId].hasGameStarted = false;
-                io.to(gameId).emit('pause', 'Game has been paused by the trainer');
-
-            });
-
-            // Handle disconnection
             socket.on('disconnect', () =>
             {
                 console.log(`Client ${socket.id} disconnected`);
