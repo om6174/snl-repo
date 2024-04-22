@@ -4,6 +4,7 @@ import http from 'http';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import knex from './knex';
 import { GameplayStatus } from '../enums';
+import randomColour from 'randomcolor';
 //cIdx: current player's index
 let snakes: Record<number, number>;
 let ladders: Record<number, number>;
@@ -91,10 +92,10 @@ async function createOrUpdateUser(userName: string, phoneNumber: string, gameId:
         await knex('user').where({ id: user.id }).update({ numberOfDevices: user.numberOfDevices + 1 });
     } else
     {
-
+        var color = randomColour();
         // Insert and retrieve the new user record
         [user] = await knex('user')
-            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 0 })
+            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 0, colour: color })
             .returning('*');
         return { user, isCreated: true };
     }
@@ -118,11 +119,13 @@ async function updateGameStatus(gameId: string, status: GameplayStatus)
 }
 
 //used to send one message to current player and a different one to other players
-async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any)
+async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number)
 {
     sockets.forEach((socketId: string) =>
     {
         io.to(socketId).emit('message', currentPlayerMessage);
+        io.to(socketId).emit('diceValue', diceValue);
+        io.to(socketId).emit('currentPosition', diceValue);
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
@@ -316,7 +319,9 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                 currentPlayer.sockets,
                 gameId,
                 'Congratulations! You completed the game!',
-                `${currentPlayer.name} has finished.`
+                `${currentPlayer.name} has finished.`,
+                diceRoll,
+                currentPlayer.score
             );
 
             // Remove the current user from the game
@@ -346,17 +351,22 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     currentPlayer.sockets,
                     gameId, 
                     `You rolled a ${diceRoll} and got bitten by a snake. Now at ${currentPlayer.score}`,
-                    `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`
+                    `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`,
+                    diceRoll,
+                    currentPlayer.score
                 );
             } else if (ladders[currentPlayer.score])
             {
                 io.to(gameId).emit('factoid', currentPlayer.score)
                 currentPlayer.score = ladders[currentPlayer.score];
+
                 sendSeparateMessages(
                     currentPlayer.sockets,
                     gameId, 
                     `You rolled a ${diceRoll} and climbed a ladder to position ${currentPlayer.score}`,
-                    `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`
+                    `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`,
+                    diceRoll,
+                    currentPlayer.score
                 );
 
             }
@@ -365,7 +375,9 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     currentPlayer.sockets,
                     gameId, 
                     `You rolled a ${diceRoll}. Your current position is ${currentPlayer.score}.`,
-                    `${currentPlayer.name} rolled a ${diceRoll}.`
+                    `${currentPlayer.name} rolled a ${diceRoll}.`,
+                    diceRoll,
+                    currentPlayer.score
                 );
             }
             await updateScore(currentPlayer.id, currentPlayer.score);
