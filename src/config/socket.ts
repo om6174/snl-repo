@@ -10,30 +10,33 @@ let ladders: Record<number, number>;
 
 async function snl()
 {
-    // const data = {
-    //     snakePositions: {
-    //         20: 18,
-    //         13: 7,
-    //         26: 16,
-    //         30: 11,
-    //         45: 34,
-    //         39: 21
-    //     },
-    //     ladderPositions: {
-    //         2: 21,
-    //         5: 18,
-    //         10: 29,
-    //         17: 36,
-    //         22: 38,
-    //         32: 49,
-    //         35: 44,
-    //         37: 43,
-    //     }
-    // };
-
-    // Insert data into the 'players' table
-    //const [r] = await knex('snakesLadders').insert(data).returning('*');
-    const r = await knex('snakesLadders').select().first('*');
+    let r = await knex('snakesLadders').select().first('*');
+    if(!r){
+        const data = {
+            snakePositions: {
+                20: 18,
+                13: 7,
+                26: 16,
+                30: 11,
+                45: 34,
+                39: 21
+            },
+            ladderPositions: {
+                2: 21,
+                5: 18,
+                10: 29,
+                17: 36,
+                22: 38,
+                32: 49,
+                35: 44,
+                37: 43,
+            }
+        };
+    
+        //Insert data into the 'players' table
+        [r] = await knex('snakesLadders').insert(data).returning('*');
+    }
+    
 
     snakes = JSON.parse(r.snakePositions);
     ladders = JSON.parse(r.ladderPositions);
@@ -64,8 +67,9 @@ async function imageData(gameId: string) {
 
     const variationRecord = await knex('variation').where({ id: gameplayRecord.variationId }).first();
 
+    const players = await knex('user').where({ gameId: gameplayRecord.url });
     // Return the variation record
-    return variationRecord;
+    return {images: variationRecord, players};
 }
 
 
@@ -90,7 +94,7 @@ async function createOrUpdateUser(userName: string, phoneNumber: string, gameId:
 
         // Insert and retrieve the new user record
         [user] = await knex('user')
-            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId })
+            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 0 })
             .returning('*');
         return { user, isCreated: true };
     }
@@ -114,7 +118,7 @@ async function updateGameStatus(gameId: string, status: GameplayStatus)
 }
 
 //used to send one message to current player and a different one to other players
-async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: string, otherPlayersMessage: string)
+async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any)
 {
     sockets.forEach((socketId: string) =>
     {
@@ -125,6 +129,22 @@ async function sendSeparateMessages(sockets: string[], gameId: string, currentPl
     {
         if (!sockets.includes(socketId))
             io.to(socketId).emit('message', otherPlayersMessage);
+    });
+
+    return true;
+}
+
+async function emitNextPlayerInfo(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any)
+{
+    sockets.forEach((socketId: string) =>
+    {
+        io.to(socketId).emit('yourTurn', currentPlayerMessage);
+    });
+
+    rooms[gameId].sockets.forEach((socketId: string) =>
+    {
+        if (!sockets.includes(socketId))
+            io.to(socketId).emit('nextPlayer', otherPlayersMessage);
     });
 
     return true;
@@ -173,7 +193,7 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
     socket.emit('imageData', await imageData(gameId));
 
     socket.emit('message', 'You are now spectating the game.');
-    if (rooms[gameId].ongoing === true) socket.emit('gameStarted', 'The game has already started.');
+    if (rooms[gameId].ongoing === true) socket.emit('message', 'The game has already started.');
     if (game.status === GameplayStatus.PAUSED) socket.emit('pause', 'Game has been paused.');
 
     socket.on('start', async () =>
@@ -186,11 +206,15 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
 
         console.log(`Game ${gameId} started`);
         await updateGameStatus(gameId, GameplayStatus.STARTED);
-        socket.broadcast.to(gameId).emit('gameStarted', 'Game started.');
+        socket.broadcast.to(gameId).emit('message', 'Game started.');
 
         rooms[gameId].ongoing = true;
         const firstPlayer = room.players[rooms[gameId].cIdx];
-        io.to(firstPlayer.sockets).emit('yourTurn');
+        emitNextPlayerInfo(firstPlayer.sockets,
+            gameId, 
+            {message:'Your turn.', userId: firstPlayer.id}, 
+            {message:`${firstPlayer.name}'s turn.`, userId: firstPlayer.id}
+        )
     });
 
     socket.on('pause', async () =>
@@ -354,8 +378,11 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         const nextUser = room.players[room.cIdx];
 
         // Notify the next user that it's their turn to roll the dice
-        io.to(nextUser.sockets).emit('yourTurn');
-    });
+        emitNextPlayerInfo(nextUser.sockets,
+            gameId, 
+            {message:'Your turn.', userId: nextUser.id}, 
+            {message:`${nextUser.name}'s turn.`, userId: nextUser.id}
+        )    });
 } catch (err: any)
 {
     console.error(err);
@@ -381,7 +408,7 @@ export function setupSocket(app: express.Application): http.Server
     io.on('connection', async (socket) =>
     {
         console.log('A client connected:', socket.id);
-
+        let userId: any;
         try
         {
             const { type, gameId } = socket.handshake.query as { type: string, gameId: string };

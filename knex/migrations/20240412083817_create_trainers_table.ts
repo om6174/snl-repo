@@ -56,7 +56,36 @@ export async function up(knex: Knex): Promise<void>
     } else {
         console.log('Trainer user already exists');
     }
+    
+    await knex.schema.createTableIfNotExists('variation', function (table) {
+        table.increments('id').primary(); // Primary key
+        table.string('gameType'); // Game type (as string)
+        table.integer('customId'); // Custom ID (as integer)
+        table.jsonb('additionalDetails'); // Additional details (as JSONB)
+        table.string('siteBanner'); // Banner (as string)
+        table.string('mobileBanner'); // Banner (as string)
+        table.string('variationName'); // Variation name (as string)
+        table.string('status'); // Status (as string)
+        table.timestamps(true, true); // Timestamps for created and updated
 
+    });
+
+    await knex.schema.createTableIfNotExists('gameplay', function (table) {
+        table.increments('id').primary(); // Primary key
+        table.integer('variationId').unsigned().notNullable().references('variation.id').onDelete('CASCADE'); // Variation ID (as integer)
+        table.integer('trainerId').unsigned(); // Trainer ID (as integer)
+        table.timestamp('startedAt'); // Game start time (as timestamp)
+        table.timestamp('endedAt'); // Game end time (as timestamp)
+        table.string('url').unique(); // URL (as string)
+        table.integer('status').defaultTo(1); // Status (as string, e.g., 'live', 'archived')
+        table.integer('numberOfPlayers'); // Number of players (as integer)
+
+        table.foreign('trainerId').references('id').inTable('trainer').onDelete('CASCADE');
+
+
+    });
+
+    
     await knex.schema.createTableIfNotExists('user', function (table)
     {
         table.increments('id').primary();
@@ -70,33 +99,6 @@ export async function up(knex: Knex): Promise<void>
         table.timestamps(true, true);
 
         table.foreign('gameId').references('url').inTable('gameplay').onDelete('CASCADE');
-    });
-
-    await knex.schema.createTableIfNotExists('gameplay', function (table) {
-        table.increments('id').primary(); // Primary key
-        table.integer('variationId'); // Variation ID (as integer)
-        table.integer('trainerId').unsigned(); // Trainer ID (as integer)
-        table.timestamp('startedAt'); // Game start time (as timestamp)
-        table.timestamp('endedAt'); // Game end time (as timestamp)
-        table.string('url').unique(); // URL (as string)
-        table.integer('status').defaultTo(1); // Status (as string, e.g., 'live', 'archived')
-        table.integer('numberOfPlayers'); // Number of players (as integer)
-
-        table.foreign('trainerId').references('id').inTable('trainer').onDelete('CASCADE');
-
-    });
-
-    await knex.schema.createTableIfNotExists('variation', function (table) {
-        table.increments('id').primary(); // Primary key
-        table.string('gameType'); // Game type (as string)
-        table.integer('customId'); // Custom ID (as integer)
-        table.jsonb('additionalDetails'); // Additional details (as JSONB)
-        table.string('siteBanner'); // Banner (as string)
-        table.string('mobileBanner'); // Banner (as string)
-        table.string('variationName'); // Variation name (as string)
-        table.string('status'); // Status (as string)
-        table.timestamps(true, true); // Timestamps for created and updated
-
     });
 
     await knex.schema.createTableIfNotExists('snakesLadders', function (table) {
