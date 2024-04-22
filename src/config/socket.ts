@@ -66,7 +66,7 @@ async function imageData(gameId: string) {
     }
 
     const variationRecord = await knex('variation').where({ id: gameplayRecord.variationId }).first();
-
+    variationRecord.additionalDetails = JSON.parse(variationRecord.additionalDetails);
     const players = await knex('user').where({ gameId: gameplayRecord.url });
     // Return the variation record
     return {images: variationRecord, players};
