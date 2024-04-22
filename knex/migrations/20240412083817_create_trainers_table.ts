@@ -64,6 +64,7 @@ export async function up(knex: Knex): Promise<void>
         table.jsonb('additionalDetails'); // Additional details (as JSONB)
         table.string('siteBanner'); // Banner (as string)
         table.string('mobileBanner'); // Banner (as string)
+        table.string('productImage'); // Banner (as string)
         table.string('variationName'); // Variation name (as string)
         table.string('status'); // Status (as string)
         table.timestamps(true, true); // Timestamps for created and updated
