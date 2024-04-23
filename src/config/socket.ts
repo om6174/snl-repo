@@ -95,7 +95,7 @@ async function createOrUpdateUser(userName: string, phoneNumber: string, gameId:
         var color = randomColour();
         // Insert and retrieve the new user record
         [user] = await knex('user')
-            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 0, colour: color })
+            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 1, colour: color })
             .returning('*');
         return { user, isCreated: true };
     }
@@ -347,7 +347,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         socket.broadcast.to(gameId).emit('newUser', {message:`User ${playerName} has joined the game.`, ...user},);
     }
 
-    socket.emit('imageData', await imageData(gameId));
+    socket.emit('imageData',{ ...await imageData(gameId), yourUserId: user.id});
 
     socket.on('rollDice', async () =>
     {
