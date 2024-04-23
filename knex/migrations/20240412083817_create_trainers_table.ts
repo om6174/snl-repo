@@ -96,6 +96,7 @@ export async function up(knex: Knex): Promise<void>
         table.datetime('finishedTime');
         table.integer('status');
         table.integer('score');
+        table.string('colour');
         table.integer('numberOfDevices');
         table.timestamps(true, true);
 

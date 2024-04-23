@@ -123,15 +123,13 @@ async function sendSeparateMessages(sockets: string[], gameId: string, currentPl
 {
     sockets.forEach((socketId: string) =>
     {
-        io.to(socketId).emit('message', currentPlayerMessage);
-        io.to(socketId).emit('diceValue', diceValue);
-        io.to(socketId).emit('currentPosition', diceValue);
+        io.to(socketId).emit('diceRolled', {message: currentPlayerMessage, diceValue, currentPosition, self: true});
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
     {
         if (!sockets.includes(socketId))
-            io.to(socketId).emit('message', otherPlayersMessage);
+            io.to(socketId).emit('diceRolled', {message: otherPlayersMessage, diceValue, currentPosition, self: false});
     });
 
     return true;
@@ -141,13 +139,13 @@ async function emitNextPlayerInfo(sockets: string[], gameId: string, currentPlay
 {
     sockets.forEach((socketId: string) =>
     {
-        io.to(socketId).emit('yourTurn', currentPlayerMessage);
+        io.to(socketId).emit('nextPlayer', {...currentPlayerMessage, self: true});
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
     {
         if (!sockets.includes(socketId))
-            io.to(socketId).emit('nextPlayer', otherPlayersMessage);
+            io.to(socketId).emit('nextPlayer', {...otherPlayersMessage, self: false});
     });
 
     return true;
@@ -188,8 +186,21 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
 
     const game = await gameExists(gameId);
     if (!game) throw new Error("Invalid game.");
+    
+    let room = rooms[gameId];
+    if (!room)
+    {
+        const game = await gameExists(gameId);
+        if (!game) throw new Error("Invalid game.");
+        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false };
+        if (game.status === GameplayStatus.STARTED)
+        {
+            console.log(`Room ${gameId} was abandoned, game has been paused.`);
+            await updateGameStatus(gameId, GameplayStatus.PAUSED);
 
-    const room = rooms[gameId] ||= { players: [], cIdx: 0, sockets: [], ongoing: game.status === GameplayStatus.STARTED };
+            socket.emit('pause', 'Game has been paused.');
+        };
+    }
     room.sockets.push(socket.id);
 
     socket.join(gameId);
@@ -216,7 +227,7 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
         emitNextPlayerInfo(firstPlayer.sockets,
             gameId, 
             {message:'Your turn.', userId: firstPlayer.id}, 
-            {message:`${firstPlayer.name}'s turn.`, userId: firstPlayer.id}
+            {message:`${firstPlayer.name}'s turn.`, userId: firstPlayer.id, name: firstPlayer.name}
         )
     });
 
@@ -234,6 +245,38 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
         socket.broadcast.to(gameId).emit('pause', 'Game has been paused.');
         socket.emit('pause', 'You paused the game.');
     });
+
+    socket.on('removePlayer', async (playerId: string) =>
+        {
+            const id = Number.parseInt(playerId);
+            console.log(`Player ${id} removed!!!`);
+            const index = room.players.findIndex((player: any) => player.id === id);
+            if (index !== -1) {
+                room.players[index].sockets.forEach((element: string) => {
+                    io.to(element).disconnectSockets();
+                });
+                room.players = room.players.filter((el: any)=>el.id!==id);
+                room.cIdx = room.cIdx % room.players.length;
+
+                const nextUser = room.players[room.cIdx];
+
+                if(room.players.length === 0){
+                    await updateGameStatus(gameId, GameplayStatus.PAUSED);
+                    socket.broadcast.to(gameId).emit('pause', 'Game has been paused.');
+                    socket.emit('pause', 'You paused the game by removing the last player.');
+                }else{
+                    emitNextPlayerInfo(nextUser.sockets,
+                        gameId, 
+                        {message:'Your turn.', userId: nextUser.id}, 
+                        {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name}
+                    );
+                }
+                
+            }
+            await knex('user').where({id, gameId: gameId}).delete();
+
+        });
+
 } catch (err: any)
 {
     console.error(err);
@@ -284,7 +327,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
     } else
     {
         room.players.push({ ...user, sockets: [socket.id] });
-        socket.broadcast.to(gameId).emit('message', `User ${playerName} has joined the game.`,);
+        socket.broadcast.to(gameId).emit('newUser', {message:`User ${playerName} has joined the game.`, ...user},);
     }
 
     socket.emit('imageData', await imageData(gameId));
@@ -324,6 +367,10 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                 currentPlayer.score
             );
 
+            currentPlayer.sockets.forEach((socketId: string) =>
+                {
+                        io.to(socketId).emit('drumRoll');
+                });            
             // Remove the current user from the game
             room.players.splice(room.cIdx, 1);
 
@@ -393,7 +440,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         emitNextPlayerInfo(nextUser.sockets,
             gameId, 
             {message:'Your turn.', userId: nextUser.id}, 
-            {message:`${nextUser.name}'s turn.`, userId: nextUser.id}
+            {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name}
         )    });
 } catch (err: any)
 {
