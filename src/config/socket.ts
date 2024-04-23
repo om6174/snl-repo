@@ -119,7 +119,7 @@ async function updateGameStatus(gameId: string, status: GameplayStatus)
 }
 
 //used to send one message to current player and a different one to other players
-async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number, factoid: number = 0)
+async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number, factoid: string | null = null)
 {
     sockets.forEach((socketId: string) =>
     {
@@ -418,7 +418,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`,
                     diceRoll,
                     currentPlayer.score,
-                    factoid
+                    "img"+factoid
                 );
             } else if (ladders[currentPlayer.score])
             {
@@ -432,7 +432,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`,
                     diceRoll,
                     currentPlayer.score,
-                    factoid
+                    "img"+factoid
                 );
 
             }
