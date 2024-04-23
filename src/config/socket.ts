@@ -246,6 +246,22 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
         socket.emit('pause', 'You paused the game.');
     });
 
+    socket.on('end', async () =>
+        {
+            if (!rooms[gameId].ongoing)
+            {
+                socket.emit('error', "The game has not started yet.");
+                return;
+            };
+    
+            console.log(`Game ${gameId} ended`);
+            await updateGameStatus(gameId, GameplayStatus.LIVE);
+            room.ongoing = false;
+            socket.to(gameId).emit('gameOver', 'Game has been stopped by trainer.');
+            socket.emit('pause', 'You ended the game.');
+            socket.to(gameId).disconnectSockets();
+        });
+
     socket.on('removePlayer', async (playerId: string) =>
         {
             const id = Number.parseInt(playerId);
