@@ -119,17 +119,17 @@ async function updateGameStatus(gameId: string, status: GameplayStatus)
 }
 
 //used to send one message to current player and a different one to other players
-async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number)
+async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number, factoid: number = 0)
 {
     sockets.forEach((socketId: string) =>
     {
-        io.to(socketId).emit('diceRolled', {message: currentPlayerMessage, diceValue, currentPosition, self: true});
+        io.to(socketId).emit('diceRolled', {message: currentPlayerMessage, diceValue, currentPosition, self: true, factoid});
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
     {
         if (!sockets.includes(socketId))
-            io.to(socketId).emit('diceRolled', {message: otherPlayersMessage, diceValue, currentPosition, self: false});
+            io.to(socketId).emit('diceRolled', {message: otherPlayersMessage, diceValue, currentPosition, self: false, factoid});
     });
 
     return true;
@@ -392,7 +392,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             }
             if (snakes[currentPlayer.score])
             {
-                io.to(gameId).emit('factoid', currentPlayer.score)
+                const factoid = currentPlayer.score;
                 currentPlayer.score = snakes[currentPlayer.score];
                 sendSeparateMessages(
                     currentPlayer.sockets,
@@ -400,11 +400,12 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     `You rolled a ${diceRoll} and got bitten by a snake. Now at ${currentPlayer.score}`,
                     `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`,
                     diceRoll,
-                    currentPlayer.score
+                    currentPlayer.score,
+                    factoid
                 );
             } else if (ladders[currentPlayer.score])
             {
-                io.to(gameId).emit('factoid', currentPlayer.score)
+                const factoid = currentPlayer.score;
                 currentPlayer.score = ladders[currentPlayer.score];
 
                 sendSeparateMessages(
@@ -413,7 +414,8 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                     `You rolled a ${diceRoll} and climbed a ladder to position ${currentPlayer.score}`,
                     `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`,
                     diceRoll,
-                    currentPlayer.score
+                    currentPlayer.score,
+                    factoid
                 );
 
             }
