@@ -425,7 +425,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
             currentPlayer.sockets.forEach((socketId: string) =>
                 {
-                        io.to(socketId).emit('drumRoll');
+                        io.to(socketId).emit('drumRoll', {message: "Congratulations! You completed the game."});
                 });            
             // Remove the current user from the game
             room.players.splice(room.cIdx, 1);
