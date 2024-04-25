@@ -36,6 +36,8 @@ function handleExtraScore(previousScore: number, newScore: number){
 
 async function snl()
 {
+    await knex('snakesLadders').del();
+
     let r = await knex('snakesLadders').select().first('*');
     if(!r){
         const data = {
