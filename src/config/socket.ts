@@ -249,7 +249,7 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
 
     socket.on('end', async () =>
         {
-            if (!rooms[gameId].ongoing)
+            if (!rooms[gameId]?.ongoing)
             {
                 socket.emit('error', "The game has not started yet.");
                 return;
