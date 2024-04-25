@@ -463,6 +463,8 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
             }
             else{
+                currentPlayer.score = ladders[currentPlayer.score] + handleExtraScore(previousScore, snakes[currentPlayer.score]);
+
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
