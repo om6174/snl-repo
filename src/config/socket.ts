@@ -22,7 +22,7 @@ const playerColours = [
 ];
 
 function handleExtraScore(previousScore: number, newScore: number){
-    const biggerSquares = [2, 5, 10, 13, 17, 20, 22, 26,30, 32, 35, 37, 39, 45]
+    const biggerSquares = [2, 6, 12, 16, 21, 25, 28, 33, 38, 41, 45, 48, 51, 58]
     let extraCount = 0;
     for(let el of biggerSquares){
         if(el >= previousScore && el < newScore){
