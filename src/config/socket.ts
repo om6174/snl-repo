@@ -21,18 +21,28 @@ const playerColours = [
     "#ffc0cb"  // pink
 ];
 
-function handleExtraScore(previousScore: number, newScore: number){
+function handleExtraScore(previousScore: number, newScore: number, reverse: boolean = false){
     const biggerSquares = [2, 6, 12, 16, 21, 25, 28, 33, 38, 41, 45, 48, 51, 58]
-    let extraCount = 0;
+    if(reverse === false){
     for(let el of biggerSquares){
-        if(el >= previousScore && el < newScore){
-            extraCount += 1;
-            newScore +=1;
-        }else if(el > newScore){
-            break;
+            if(el >= previousScore && el < newScore){
+                newScore +=1;
+            }else if(el > newScore){
+                break;
+            }
         }
     }
-    return extraCount;
+    else{
+        for (let i = biggerSquares.length - 1; i >= 0; i--) {
+            if(biggerSquares[i] >= newScore && biggerSquares[i] < previousScore){
+                newScore -=1;
+            }else if(biggerSquares[i] < previousScore){
+                break;
+            }
+        }
+    }
+
+    return newScore;
 };
 
 async function snl()
@@ -439,7 +449,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             if (snakes[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = snakes[currentPlayer.score] + handleExtraScore(currentPlayer.score, snakes[currentPlayer.score]);
+                currentPlayer.score = handleExtraScore(currentPlayer.score, snakes[currentPlayer.score], true);
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
@@ -451,7 +461,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             } else if (ladders[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = ladders[currentPlayer.score] + handleExtraScore(currentPlayer.score, snakes[currentPlayer.score]);
+                currentPlayer.score = handleExtraScore(currentPlayer.score, ladders[currentPlayer.score]);
 
                 sendSeparateMessages(
                     currentPlayer,
