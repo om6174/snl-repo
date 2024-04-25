@@ -4,10 +4,22 @@ import http from 'http';
 import { DefaultEventsMap } from 'socket.io/dist/typed-events';
 import knex from './knex';
 import { GameplayStatus } from '../enums';
-import randomColour from 'randomcolor';
 //cIdx: current player's index
 let snakes: Record<number, number>;
 let ladders: Record<number, number>;
+
+const playerColours = [
+    "#ff0000", // red
+    "#0000ff", // blue
+    "#00ffff", // cyan
+    "#ff00ff", // magenta
+    "#008000", // green
+    "#ffff00", // yellow
+    "#ffa500", // orange
+    "#800080", // purple
+    "#008080", // teal
+    "#ffc0cb"  // pink
+];
 
 function handleExtraScore(previousScore: number, newScore: number){
     const biggerSquares = [2, 5, 10, 13, 17, 20, 22, 26,30, 32, 35, 37, 39, 45]
@@ -28,22 +40,23 @@ async function snl()
     if(!r){
         const data = {
             snakePositions: {
-                13: 7,
-                20: 18,
-                26: 16,
-                30: 11,
-                39: 21,
-                45: 34,
+                16: 9,
+                25: 23,
+                33: 20,
+                38: 14,
+                51: 27,
+                58: 44
             },
             ladderPositions: {
-                2: 21,
-                5: 18,
-                10: 29,
-                17: 36,
-                22: 38,
-                32: 49,
-                35: 44,
-                37: 43,
+                2: 27,
+                6: 23,
+                12: 37,
+                21: 47,
+                28: 50,
+                41: 63,
+                45: 57,
+                48: 56,
+
             }
         };
     
@@ -96,7 +109,7 @@ async function leaderboard(gameId: string)
     return records;
 }
 
-async function createOrUpdateUser(userName: string, phoneNumber: string, gameId: string)
+async function createOrUpdateUser(userName: string, phoneNumber: string, gameId: string, colour: string)
 {
     let user = await knex('user').where({ phoneNumber, gameId }).first();
 
@@ -105,10 +118,9 @@ async function createOrUpdateUser(userName: string, phoneNumber: string, gameId:
         await knex('user').where({ id: user.id }).update({ numberOfDevices: user.numberOfDevices + 1 });
     } else
     {
-        var color = randomColour();
         // Insert and retrieve the new user record
         [user] = await knex('user')
-            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 1, colour: color })
+            .insert({ name: userName, phoneNumber, status: 1, numberOfDevices: 1, gameId, score: 1, colour: colour })
             .returning('*');
         return { user, isCreated: true };
     }
@@ -347,7 +359,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
     }
 
-    let { user } = await createOrUpdateUser(playerName, playerPhone, gameId);
+    let { user } = await createOrUpdateUser(playerName, playerPhone, gameId, playerColours[room.players.length%10]);
 
     socket.join(gameId);
     room.sockets.push(socket.id);
