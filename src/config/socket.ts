@@ -408,9 +408,9 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
         const diceRoll = Math.floor(Math.random() * 6) + 1;
         const previousScore = currentPlayer.score;
-        currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 65);
+        currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 64);
         currentPlayer.score = handleExtraScore(previousScore, currentPlayer.score)
-        if (currentPlayer.score >= 65)
+        if (currentPlayer.score >= 64)
         {
             await updateScore(currentPlayer.id, currentPlayer.score, true);
 
