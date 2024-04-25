@@ -135,17 +135,17 @@ async function sendSeparateMessages(sockets: string[], gameId: string, currentPl
     return true;
 }
 
-async function emitNextPlayerInfo(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any)
+async function emitNextPlayerInfo(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, user: any)
 {
     sockets.forEach((socketId: string) =>
     {
-        io.to(socketId).emit('nextPlayer', {...currentPlayerMessage, self: true});
+        io.to(socketId).emit('nextPlayer', {...currentPlayerMessage, self: true, user});
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
     {
         if (!sockets.includes(socketId))
-            io.to(socketId).emit('nextPlayer', {...otherPlayersMessage, self: false});
+            io.to(socketId).emit('nextPlayer', {...otherPlayersMessage, self: false, user});
     });
 
     return true;
@@ -227,7 +227,8 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
         emitNextPlayerInfo(firstPlayer.sockets,
             gameId, 
             {message:'Your turn.', userId: firstPlayer.id}, 
-            {message:`${firstPlayer.name}'s turn.`, userId: firstPlayer.id, name: firstPlayer.name}
+            {message:`${firstPlayer.name}'s turn.`, userId: firstPlayer.id, name: firstPlayer.name},
+            firstPlayer
         )
     });
 
@@ -285,7 +286,8 @@ async function handleSpectatorConnection(socket: Socket, gameId: string)
                     emitNextPlayerInfo(nextUser.sockets,
                         gameId, 
                         {message:'Your turn.', userId: nextUser.id}, 
-                        {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name}
+                        {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name},
+                        nextUser
                     );
                 }
                 
@@ -368,9 +370,9 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
         const diceRoll = Math.floor(Math.random() * 6) + 1;
 
-        currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 50);
+        currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 65);
 
-        if (currentPlayer.score >= 50)
+        if (currentPlayer.score >= 65)
         {
             await updateScore(currentPlayer.id, currentPlayer.score, true);
 
@@ -459,7 +461,8 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         emitNextPlayerInfo(nextUser.sockets,
             gameId, 
             {message:'Your turn.', userId: nextUser.id}, 
-            {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name}
+            {message:`${nextUser.name}'s turn.`, userId: nextUser.id, name: nextUser.name},
+            nextUser
         )    });
 } catch (err: any)
 {
