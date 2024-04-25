@@ -449,7 +449,6 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             if (snakes[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = handleExtraScore(currentPlayer.score, snakes[currentPlayer.score], true);
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
@@ -461,7 +460,6 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             } else if (ladders[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = handleExtraScore(currentPlayer.score, ladders[currentPlayer.score]);
 
                 sendSeparateMessages(
                     currentPlayer,
