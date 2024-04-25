@@ -119,17 +119,17 @@ async function updateGameStatus(gameId: string, status: GameplayStatus)
 }
 
 //used to send one message to current player and a different one to other players
-async function sendSeparateMessages(sockets: string[], gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, currentPosition: number, factoid: string | null = null)
+async function sendSeparateMessages(currentPlayer: any, gameId: string, currentPlayerMessage: any, otherPlayersMessage: any, diceValue: number, factoid: string | null = null)
 {
-    sockets.forEach((socketId: string) =>
+    currentPlayer.sockets.forEach((socketId: string) =>
     {
-        io.to(socketId).emit('diceRolled', {message: currentPlayerMessage, diceValue, currentPosition, self: true, factoid});
+        io.to(socketId).emit('diceRolled', {message: currentPlayerMessage, diceValue, currentPosition: currentPlayer.score, self: true, factoid, player: currentPlayer});
     });
 
     rooms[gameId].sockets.forEach((socketId: string) =>
     {
-        if (!sockets.includes(socketId))
-            io.to(socketId).emit('diceRolled', {message: otherPlayersMessage, diceValue, currentPosition, self: false, factoid});
+        if (!currentPlayer.sockets.includes(socketId))
+            io.to(socketId).emit('diceRolled', {message: otherPlayersMessage, diceValue, currentPosition: currentPlayer.score, self: false, factoid, player: currentPlayer});
     });
 
     return true;
@@ -378,12 +378,11 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
             // The current user has won the game
             sendSeparateMessages(
-                currentPlayer.sockets,
+                currentPlayer,
                 gameId,
                 'Congratulations! You completed the game!',
                 `${currentPlayer.name} has finished.`,
                 diceRoll,
-                currentPlayer.score
             );
 
             currentPlayer.sockets.forEach((socketId: string) =>
@@ -414,13 +413,12 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                 const factoid = currentPlayer.score;
                 currentPlayer.score = snakes[currentPlayer.score];
                 sendSeparateMessages(
-                    currentPlayer.sockets,
+                    currentPlayer,
                     gameId, 
                     `You rolled a ${diceRoll} and got bitten by a snake. Now at ${currentPlayer.score}`,
                     `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`,
                     diceRoll,
-                    currentPlayer.score,
-                    "img"+factoid
+                    "img"+factoid,
                 );
             } else if (ladders[currentPlayer.score])
             {
@@ -428,24 +426,22 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
                 currentPlayer.score = ladders[currentPlayer.score];
 
                 sendSeparateMessages(
-                    currentPlayer.sockets,
+                    currentPlayer,
                     gameId, 
                     `You rolled a ${diceRoll} and climbed a ladder to position ${currentPlayer.score}`,
                     `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`,
                     diceRoll,
-                    currentPlayer.score,
-                    "img"+factoid
+                    "img"+factoid,
                 );
 
             }
             else{
                 sendSeparateMessages(
-                    currentPlayer.sockets,
+                    currentPlayer,
                     gameId, 
                     `You rolled a ${diceRoll}. Your current position is ${currentPlayer.score}.`,
                     `${currentPlayer.name} rolled a ${diceRoll}.`,
                     diceRoll,
-                    currentPlayer.score
                 );
             }
             await updateScore(currentPlayer.id, currentPlayer.score);
