@@ -9,18 +9,31 @@ import randomColour from 'randomcolor';
 let snakes: Record<number, number>;
 let ladders: Record<number, number>;
 
+function handleExtraScore(previousScore: number, newScore: number){
+    const biggerSquares = [2, 5, 10, 13, 17, 20, 22, 26,30, 32, 35, 37, 39, 45]
+    let extraCount = 0;
+    for(let el of biggerSquares){
+        if(el > previousScore && el < newScore){
+            extraCount += 1;
+        }else if(el > newScore){
+            break;
+        }
+    }
+    return extraCount;
+};
+
 async function snl()
 {
     let r = await knex('snakesLadders').select().first('*');
     if(!r){
         const data = {
             snakePositions: {
-                20: 18,
                 13: 7,
+                20: 18,
                 26: 16,
                 30: 11,
+                39: 21,
                 45: 34,
-                39: 21
             },
             ladderPositions: {
                 2: 21,
@@ -369,7 +382,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         }
 
         const diceRoll = Math.floor(Math.random() * 6) + 1;
-
+        const previousScore = currentPlayer.score;
         currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 65);
 
         if (currentPlayer.score >= 65)
@@ -411,7 +424,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             if (snakes[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = snakes[currentPlayer.score];
+                currentPlayer.score = snakes[currentPlayer.score] + handleExtraScore(previousScore, snakes[currentPlayer.score]);
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
@@ -423,7 +436,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             } else if (ladders[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = ladders[currentPlayer.score];
+                currentPlayer.score = ladders[currentPlayer.score] + handleExtraScore(previousScore, snakes[currentPlayer.score]);
 
                 sendSeparateMessages(
                     currentPlayer,
