@@ -398,7 +398,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
         const diceRoll = Math.floor(Math.random() * 6) + 1;
         const previousScore = currentPlayer.score;
         currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 65);
-
+        currentPlayer.score += handleExtraScore(previousScore, snakes[currentPlayer.score])
         if (currentPlayer.score >= 65)
         {
             await updateScore(currentPlayer.id, currentPlayer.score, true);
@@ -438,7 +438,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             if (snakes[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = snakes[currentPlayer.score] + handleExtraScore(previousScore, snakes[currentPlayer.score]);
+                currentPlayer.score = snakes[currentPlayer.score] + handleExtraScore(currentPlayer.score, snakes[currentPlayer.score]);
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
@@ -450,7 +450,7 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
             } else if (ladders[currentPlayer.score])
             {
                 const factoid = currentPlayer.score;
-                currentPlayer.score = ladders[currentPlayer.score] + handleExtraScore(previousScore, snakes[currentPlayer.score]);
+                currentPlayer.score = ladders[currentPlayer.score] + handleExtraScore(currentPlayer.score, snakes[currentPlayer.score]);
 
                 sendSeparateMessages(
                     currentPlayer,
@@ -463,8 +463,6 @@ async function handlePlayerConnection(socket: Socket, gameId: string, playerPhon
 
             }
             else{
-                currentPlayer.score = currentPlayer.score + handleExtraScore(previousScore, currentPlayer.score);
-
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
