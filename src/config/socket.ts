@@ -27,6 +27,7 @@ function handleExtraScore(previousScore: number, newScore: number){
     for(let el of biggerSquares){
         if(el >= previousScore && el < newScore){
             extraCount += 1;
+            newScore +=1;
         }else if(el > newScore){
             break;
         }
