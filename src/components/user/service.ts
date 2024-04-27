@@ -3,7 +3,6 @@ import { User, UserModel } from './model';
 import jwt from 'jsonwebtoken';
 import { UserRole } from '../../enums'
 import { ServiceType } from '../../types';
-import { io } from '../../config/socket';
 
 export class TrainerService extends DefaultService<UserModel> {
     constructor() {
@@ -27,10 +26,6 @@ export class TrainerService extends DefaultService<UserModel> {
             record = await this.model.update(record.id, {
                 numberOfDevices: record.numberOfDevices + 1,
             });
-        }
-    
-        if (io) {
-            io.to(params.gameId).emit('userJoined', record);
         }
 
         return record;

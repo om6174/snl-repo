@@ -5,6 +5,6 @@ import { validateCreateGameplay, validateUpdateGameplay } from '../../validators
 
 
 const service = new GameplayService();
-const routeManager = new RouteManager(service, {create: validateCreateGameplay, update: validateUpdateGameplay}, {create: [UserRole.TRAINER], getAll: [UserRole.TRAINER, UserRole.ADMIN], getById: [UserRole.TRAINER, UserRole.ADMIN], delete: [UserRole.TRAINER]});
+const routeManager = new RouteManager(service, {create: validateCreateGameplay, update: validateUpdateGameplay}, {create: [UserRole.TRAINER], getAll: [], getById: [UserRole.TRAINER, UserRole.ADMIN], delete: [UserRole.TRAINER]});
 
 export default routeManager.router;

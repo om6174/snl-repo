@@ -5,7 +5,7 @@ import variationRoutes from './src/components/variation';
 import gameplayRoutes from './src/components/gameplay';
 import { upload } from './src/middleware';
 import path from 'path';
-import { setupSocket} from './src/config/socket';
+import { setupSocket} from './src/components/socket/socket';
 
 require('dotenv').config();
 const app = express();

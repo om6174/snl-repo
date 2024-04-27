@@ -1,4 +1,3 @@
-import { io } from '../../config/socket';
 import { GameplayStatus, UserRole } from '../../enums';
 import { ServiceType } from '../../types';
 import { DefaultService } from '../default/service';
@@ -31,10 +30,6 @@ export class GameplayService extends DefaultService<GameplayModel> {
         // Create a new socket.io room for the gameplay using the URL as the room identifier
         const gameRoom = params.url;
     
-        // Create a room in the socket.io adapter for the gameplay
-        if (!io.of('/').adapter.rooms.has(gameRoom)) {
-            io.of('/').adapter.rooms.set(gameRoom, new Set());
-        }    
         // Return the created gameplay record
         return gameplay;
       };
