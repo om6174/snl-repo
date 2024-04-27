@@ -152,7 +152,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
         socket.broadcast.to(gameId).emit('newUser', {message:`User ${playerName} has joined the game.`, ...user, userList: room.players},);
     }
 
-    socket.emit('imageData',{ ...await imageData(gameId), yourUserId: user.id});
+    socket.emit('imageData',{ ...await imageData(gameId), user});
 
     socket.on('rollDice', async () =>
     {
