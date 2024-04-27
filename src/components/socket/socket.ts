@@ -78,7 +78,10 @@ export async function updateScore(id: number, score: number, finished: boolean =
 
 export async function updateGameStatus(gameId: string, status: GameplayStatus)
 {
-    await knex('gameplay').where({ url: gameId }).update({ status });
+    const [gameplay] = await knex('gameplay').where({ url: gameId }).update({ status }).returning('*');
+    if(status === GameplayStatus.STARTED && gameplay.startedAt === null){
+        await knex('gameplay').where({ url: gameId }).update({startedAt: new Date()})
+    }
     return true;
 }
 

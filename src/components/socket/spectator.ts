@@ -44,6 +44,7 @@ export async function handleSpectatorConnection(socket: Socket, gameId: string)
 
         console.log(`Game ${gameId} started`);
         await updateGameStatus(gameId, GameplayStatus.STARTED);
+        
         socket.broadcast.to(gameId).emit('message', 'Game started.');
 
         rooms[gameId].ongoing = true;

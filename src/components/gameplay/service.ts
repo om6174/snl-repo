@@ -1,3 +1,4 @@
+import knex from '../../config/knex';
 import { GameplayStatus, UserRole } from '../../enums';
 import { ServiceType } from '../../types';
 import { DefaultService } from '../default/service';
@@ -15,6 +16,17 @@ export class GameplayService extends DefaultService<GameplayModel> {
             return this.model.getAll(query);
         else
             return this.model.getAll({...query, trainerId: locals.user});
+    };
+
+    getById = async ({ params }: ServiceType): Promise<Record<string, any> | null> => {
+        const gameplay = await this.model.getById(params.id);
+        const players = [];
+        if(gameplay && gameplay?.status !== GameplayStatus.LIVE){
+            let users = await knex('user').where({gameId: gameplay.url}).orderBy('score', 'desc', 'last').orderBy('finishedTime', 'asc', 'last');
+            users = users.map(user => {user.finishedTime = user.finishedTime - gameplay.startedAt; return user;});
+            players.push(users);
+        }
+        return {gameplay, players}
     };
 
     create = async ({ body, params, locals }: ServiceType): Promise<Record<string, any>> => {
