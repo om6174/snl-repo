@@ -16,6 +16,7 @@ export class GameplayService extends DefaultService<GameplayModel> {
         else
             return this.model.getAll({...query, trainerId: locals.user});
     };
+
     create = async ({ body, params, locals }: ServiceType): Promise<Record<string, any>> => {
         // Assign trainerId from locals
         body.trainerId = locals.user;
