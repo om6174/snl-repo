@@ -149,7 +149,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
     } else
     {
         room.players.push({ ...user, sockets: [socket.id] });
-        socket.broadcast.to(gameId).emit('newUser', {message:`User ${playerName} has joined the game.`, ...user},);
+        socket.broadcast.to(gameId).emit('newUser', {message:`User ${playerName} has joined the game.`, ...user, userList: room.players},);
     }
 
     socket.emit('imageData',{ ...await imageData(gameId), yourUserId: user.id});
