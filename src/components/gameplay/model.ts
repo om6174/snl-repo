@@ -27,9 +27,12 @@ export class GameplayModel extends DefaultModel {
             for (const key in filters) {
                 if (filters.hasOwnProperty(key)) {
                     const value = filters[key];
-                    
+                    if (Array.isArray(value)) {
+                        // Use whereIn for filtering with array values
+                        query = query.whereIn(`${this.tableName}.${key}`, value);
+                    }
                     // If the filter value is a string, use 'like' for substring matching
-                    if (typeof value === 'string') {
+                    else if (typeof value === 'string') {
                         query = query.where(`${this.tableName}.${key}`, 'like', `%${value}%`);
                     } else {
                         // For other data types, use a standard equality check
