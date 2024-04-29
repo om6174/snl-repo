@@ -20,8 +20,7 @@ export class GameplayModel extends DefaultModel {
 
     async getAll(filters: Record<string, any> = {}): Promise<Record<string, any>[]> {
         let query = knex(this.tableName)
-        .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType')
-        .options({nestTables: true})
+        .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails')
         .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id');
 
         if (Object.keys(filters).length > 0) {

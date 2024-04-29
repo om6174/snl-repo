@@ -12,10 +12,22 @@ export class GameplayService extends DefaultService<GameplayModel> {
     }
 
     getAll = async ({locals, query}: ServiceType): Promise<Record<string, any>[]> => {
-        if(locals.role === UserRole.ADMIN)
-            return this.model.getAll(query);
-        else
-            return this.model.getAll({...query, trainerId: locals.user});
+        let games: Record<string, any>[] = [];
+        if(locals.role === UserRole.ADMIN){
+            const [data] = await this.model.getAll(query);
+            games.push(data);
+
+        }
+        else{
+            const [data] = await this.model.getAll({...query, trainerId: locals.user});
+            games.push(data);
+
+        }
+        games = games.map(game => { 
+            game.additionalDetails = JSON.parse(game.additionalDetails); return game;});
+
+        return games;
+
     };
 
     getById = async ({ params }: ServiceType): Promise<Record<string, any> | null> => {
