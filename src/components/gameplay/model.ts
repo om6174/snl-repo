@@ -30,10 +30,10 @@ export class GameplayModel extends DefaultModel {
                     
                     // If the filter value is a string, use 'like' for substring matching
                     if (typeof value === 'string') {
-                        query = query.where(key, 'like', `%${value}%`);
+                        query = query.where(`${this.tableName}.${key}`, 'like', `%${value}%`);
                     } else {
                         // For other data types, use a standard equality check
-                        query = query.where(key, value);
+                        query = query.where(`${this.tableName}.${key}`, value);
                     }
                 }
             }
