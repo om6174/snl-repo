@@ -47,7 +47,6 @@ export const validateUpdateGameplay = [
 
 export const validateCreateVariation = [
     body('gameType').notEmpty().withMessage('GameType cannot be empty'),
-    body('customId').notEmpty().withMessage('customId cannot be empty'),
     body('additionalDetails').isObject().withMessage('AdditionalDetails must be a valid JSON object').custom((value) => {
         if (!value.hasOwnProperty('backgroundImage')) {
             return false;
@@ -62,7 +61,6 @@ export const validateCreateVariation = [
 
 export const validateUpdateVariation = [
     body('gameType').optional().notEmpty().withMessage('GameType cannot be empty if provided'),
-    body('customId').optional().notEmpty().withMessage('CustomId cannot be empty if provided'),
     body('additionalDetails').optional().isObject().withMessage('AdditionalDetails must be a valid object if provided'),
     body('siteBanner').optional().isString().withMessage('siteBanner must be a valid string if provided'),
     body('mobileBanner').optional().isString().withMessage('mobileBanner must be a valid string if provided'),
