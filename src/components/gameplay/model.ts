@@ -46,6 +46,15 @@ export class GameplayModel extends DefaultModel {
         return query;
     }
 
+    async getByUrl(url: string): Promise<Record<string, any>> {
+        const gameplay = await knex(this.tableName)
+        .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'variation.siteBanner', 'variation.mobileBanner', 'variation.productImage')
+        .where({ url })
+        .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id');
+        return gameplay;
+
+    }
+
     async delete(id: number): Promise<boolean> {
         await knex(this.tableName).where({ id }).update({status: GameplayStatus.ARCHIVED});
         return true;

@@ -18,8 +18,4 @@ export class VariationService extends DefaultService<VariationModel> {
         records.map(record=>{record.additionalDetails = JSON.parse(record.additionalDetails)});
         return records;
     };
-
-    getByUrl = async ({ params }: ServiceType): Promise<Record<string, any>> => {
-        return this.model.getOne(params.url)
-    }
 }

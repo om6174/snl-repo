@@ -58,4 +58,8 @@ export class GameplayService extends DefaultService<GameplayModel> {
         // Return the created gameplay record
         return gameplay;
       };
+
+    getByUrl = async ({ params }: ServiceType): Promise<Record<string, any>> => {
+        return this.getByUrl(params.url)
+    }
 }

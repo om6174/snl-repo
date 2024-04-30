@@ -9,7 +9,6 @@ const service = new VariationService();
 const routeManager = new RouteManager(service, {create: validateCreateVariation, update: validateUpdateVariation});
 routeManager.setEndpoint = new RouteConfig('/', service.getAll, [], [UserRole.ADMIN, UserRole.TRAINER], 'get');
 routeManager.setEndpoint = new RouteConfig('/:id', service.getById, [], [UserRole.ADMIN, UserRole.TRAINER], 'get');
-routeManager.setEndpoint = new RouteConfig('/url/:url', service.getByUrl, [], [], 'get')
 
 const router = routeManager.router;
 router.post('/', upload.fields([{ name: 'siteBanner' }, { name: 'mobileBanner' }]), handleService(service.create));

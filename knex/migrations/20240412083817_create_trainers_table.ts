@@ -98,6 +98,7 @@ export async function up(knex: Knex): Promise<void>
         table.integer('score');
         table.string('colour');
         table.integer('numberOfDevices');
+        table.integer('numberOfMoves').defaultTo(0);
         table.timestamps(true, true);
 
         table.foreign('gameId').references('url').inTable('gameplay').onDelete('CASCADE');
