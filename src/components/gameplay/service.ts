@@ -60,6 +60,8 @@ export class GameplayService extends DefaultService<GameplayModel> {
       };
 
     getByUrl = async ({ params }: ServiceType): Promise<Record<string, any>> => {
-        return this.model.getByUrl(params.url)
+        const game = await this.model.getByUrl(params.url);
+        game.additionalDetails = JSON.parse(game.additionalDetails);
+        return game;
     }
 }
