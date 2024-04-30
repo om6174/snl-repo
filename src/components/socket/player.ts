@@ -129,7 +129,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
             await updateGameStatus(gameId, GameplayStatus.PAUSED);
             socket.emit('pause', 'Game has been paused.');
         };
-        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false };
+        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false, variationData: await knex('variation').where({id: game.variationId}).first() };
     }else if(room.ongoing === false){
         const game = await gameExists(gameId);
         if (!game) throw new Error("Invalid game.");
@@ -176,7 +176,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
         currentPlayer.previousScore = currentPlayer.score;
         currentPlayer.score = Math.min(currentPlayer.score + diceRoll, 64);
         currentPlayer.score = handleExtraScore(currentPlayer.previousScore, currentPlayer.score);
-        
+
         if (currentPlayer.score >= 64)
         {
             await updateScore(currentPlayer.id, currentPlayer.score, true);
@@ -255,6 +255,8 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                 console.log("6")
             }else{
                 room.cIdx = (room.cIdx + 1) % room.players.length;
+                // currentPlayer.numberOfMoves += 1;
+                // await knex('user').where({id: currentPlayer.id}).update({numberOfMoves: currentPlayer.numberOfMoves});
             }
         }
 
