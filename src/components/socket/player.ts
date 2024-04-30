@@ -259,8 +259,8 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                 console.log("6")
             }else{
                 room.cIdx = (room.cIdx + 1) % room.players.length;
-                // currentPlayer.numberOfMoves += 1;
-                // await knex('user').where({id: currentPlayer.id}).update({numberOfMoves: currentPlayer.numberOfMoves});
+                currentPlayer.numberOfMoves += 1;
+                await knex('user').where({id: currentPlayer.id}).update({numberOfMoves: currentPlayer.numberOfMoves});
             }
         }
 

@@ -51,9 +51,6 @@ export class GameplayService extends DefaultService<GameplayModel> {
         
         // Create a new gameplay in the model
         const gameplay = await this.model.create(body);
-        
-        // Create a new socket.io room for the gameplay using the URL as the room identifier
-        const gameRoom = params.url;
     
         // Return the created gameplay record
         return gameplay;
