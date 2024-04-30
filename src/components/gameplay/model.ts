@@ -48,7 +48,7 @@ export class GameplayModel extends DefaultModel {
 
     async getByUrl(url: string): Promise<Record<string, any>> {
         const gameplay = await knex(this.tableName)
-        .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'variation.siteBanner', 'variation.mobileBanner', 'variation.productImage')
+        .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'variation.siteBanner', 'variation.mobileBanner', 'variation.productImage', 'variation.variationName')
         .where({ url })
         .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id');
         return gameplay;
