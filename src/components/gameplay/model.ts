@@ -50,7 +50,7 @@ export class GameplayModel extends DefaultModel {
         const gameplay = await knex(this.tableName)
         .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'variation.siteBanner', 'variation.mobileBanner', 'variation.productImage', 'variation.variationName')
         .where({ url })
-        .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id');
+        .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id').first();
         return gameplay;
 
     }
