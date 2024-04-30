@@ -2,6 +2,10 @@ import { GameplayStatus } from "../../enums";
 import { emitNextPlayerInfo, gameExists, imageData, leaderboard, rooms, updateGameStatus } from "./socket";
 import knex from '../../config/knex';
 import { Socket } from "socket.io";
+async function getVriationData(variationId: number){
+    const data = await knex('variation').where({id: variationId}).first();
+    return JSON.parse(data.additionalDetails);
+}
 
 export async function handleSpectatorConnection(socket: Socket, gameId: string)
 {
@@ -16,7 +20,7 @@ export async function handleSpectatorConnection(socket: Socket, gameId: string)
     {
         const game = await gameExists(gameId);
         if (!game) throw new Error("Invalid game.");
-        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false, variationData: await knex('variation').where({id: game.variationId}).first() };
+        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false, variationData: await getVriationData(game.variationId) };
         if (game.status === GameplayStatus.STARTED)
         {
             console.log(`Room ${gameId} was abandoned, game has been paused.`);

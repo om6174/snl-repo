@@ -107,6 +107,10 @@ async function snl()
     return true;
 }
 
+async function getVriationData(variationId: number){
+    const data = await knex('variation').where({id: variationId}).first();
+    return JSON.parse(data.additionalDetails);
+}
 //TODO: add currentPlayerIndex to gameplay table
 export async function handlePlayerConnection(socket: Socket, gameId: string, playerPhone: string, playerName: string)
 {
@@ -129,7 +133,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
             await updateGameStatus(gameId, GameplayStatus.PAUSED);
             socket.emit('pause', 'Game has been paused.');
         };
-        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false, variationData: await knex('variation').where({id: game.variationId}).first() };
+        room = rooms[gameId] = { players: [], cIdx: 0, sockets: [], ongoing: false, variationData: await getVriationData(game.variationId) };
     }else if(room.ongoing === false){
         const game = await gameExists(gameId);
         if (!game) throw new Error("Invalid game.");
