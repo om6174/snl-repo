@@ -6,6 +6,19 @@ import { GameplayStatus } from "../../enums";
 
 let snakes: Record<number, number>;
 let ladders: Record<number, number>;
+function setMessageScore(newScore: number) {
+    const biggerSquares = [2, 6, 12, 16, 21, 25, 28, 33, 38, 41, 45, 48, 51, 58]
+    let extraSpace = 0;
+
+    for (let el of biggerSquares) {
+        if (el < newScore) {
+            extraSpace += 1;
+        } else if (el > newScore) {
+            break;
+        }
+    }
+    return newScore - extraSpace;
+};
 
 const playerColours = [
     "#ff0000", // red
@@ -224,8 +237,8 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
-                    `You rolled a ${diceRoll} and got bitten by a snake. Now at ${currentPlayer.score}`,
-                    `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${currentPlayer.score}`,
+                    `You rolled a ${diceRoll} and got bitten by a snake. Now at ${setMessageScore(currentPlayer.score)}`,
+                    `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${setMessageScore(currentPlayer.score)}`,
                     diceRoll,
                     room.variationData["img"+factoid],
                 );
@@ -237,8 +250,8 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
-                    `You rolled a ${diceRoll} and climbed a ladder to position ${currentPlayer.score}`,
-                    `${currentPlayer.name} climbed a ladder to position ${currentPlayer.score}`,
+                    `You rolled a ${diceRoll} and climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
+                    `${currentPlayer.name} climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
                     diceRoll,
                     room.variationData["img"+factoid],
                 );
@@ -248,7 +261,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                 sendSeparateMessages(
                     currentPlayer,
                     gameId, 
-                    `You rolled a ${diceRoll}. Your current position is ${currentPlayer.score}.`,
+                    `You rolled a ${diceRoll}. Your current position is ${setMessageScore(currentPlayer.score)}.`,
                     `${currentPlayer.name} rolled a ${diceRoll}.`,
                     diceRoll,
                 );
