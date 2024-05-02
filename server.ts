@@ -6,13 +6,17 @@ import gameplayRoutes from './src/components/gameplay';
 import { upload } from './src/middleware';
 import path from 'path';
 import { setupSocket} from './src/components/socket/socket';
+import cors from 'cors';
 
 require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 const httpServer = setupSocket(app);
-
+app.use(cors({
+  origin: '*',  // Allow your frontend domain
+  exposedHeaders: ['Content-Disposition']  // Your existing exposedHeaders setting
+}));
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(urlencoded({extended: true}));
