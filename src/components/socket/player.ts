@@ -240,7 +240,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                     `You rolled a ${diceRoll} and got bitten by a snake. Now at ${setMessageScore(currentPlayer.score)}`,
                     `${currentPlayer.name} rolled a ${diceRoll} and got bitten by a snake. He's Now at ${setMessageScore(currentPlayer.score)}`,
                     diceRoll,
-                    room.variationData["img"+factoid],
+                    "img"+factoid,
                 );
             } else if (ladders[currentPlayer.score])
             {
@@ -253,7 +253,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                     `You rolled a ${diceRoll} and climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
                     `${currentPlayer.name} climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
                     diceRoll,
-                    room.variationData["img"+factoid],
+                    "img"+factoid,
                 );
 
             }
