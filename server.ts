@@ -26,7 +26,7 @@ app.use('/api/trainer', trainerRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/variation', variationRoutes);
 app.use('/api/gameplay', gameplayRoutes);
-
+app.get('/', (req,res)=>{ return res.send("Connected successfully!!!")})
 
 app.post("/upload/:fileType", upload.single("file"), (req, res) => {
   console.log(req.file)

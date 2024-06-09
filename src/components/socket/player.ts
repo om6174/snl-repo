@@ -251,7 +251,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                     currentPlayer,
                     gameId, 
                     `You rolled a ${diceRoll} and climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
-                    `${currentPlayer.name} climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
+                    `${currentPlayer.name} rolled a ${diceRoll} and climbed a ladder to position ${setMessageScore(currentPlayer.score)}`,
                     diceRoll,
                     "img"+factoid,
                 );
@@ -262,7 +262,7 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
                     currentPlayer,
                     gameId, 
                     `You rolled a ${diceRoll}. Your current position is ${setMessageScore(currentPlayer.score)}.`,
-                    `${currentPlayer.name} rolled a ${diceRoll}.`,
+                    `${currentPlayer.name} rolled a ${diceRoll}.He's Now at ${setMessageScore(currentPlayer.score)}.`,
                     diceRoll,
                 );
             }
