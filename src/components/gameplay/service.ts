@@ -15,17 +15,18 @@ export class GameplayService extends DefaultService<GameplayModel> {
         let games: Record<string, any>[] = [];
         if(locals.role === UserRole.ADMIN){
             const data = await this.model.getAll(query);
-            games.push(data);
+            games = data;
 
         }
         else{
             const data = await this.model.getAll({...query, trainerId: locals.user});
-            games.push(data);
+            games = data;
 
         }
+        console.log(games)
+
         games = games.map(game => { 
             game.additionalDetails = JSON.parse(game.additionalDetails||"{}"); return game;});
-
         return games;
 
     };

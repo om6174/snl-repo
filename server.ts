@@ -12,11 +12,16 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-const httpServer = setupSocket(app);
 app.use(cors({
-  origin: '*',  // Allow your frontend domain
-  exposedHeaders: ['Content-Disposition']  // Your existing exposedHeaders setting
+  origin: '*',  // Allow all origins
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'FETCH'],  // Allow all methods
+  allowedHeaders: '*',  // Allow all headers
+  exposedHeaders: '*',  // Expose all headers
 }));
+
+
+const httpServer = setupSocket(app);
+
 // Middleware to parse JSON requests
 app.use(express.json());
 app.use(urlencoded({extended: true}));
