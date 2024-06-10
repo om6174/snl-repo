@@ -40,6 +40,10 @@ export async function handleSpectatorConnection(socket: Socket, gameId: string)
 
     socket.on('start', async () =>
     {
+        if(!rooms[gameId]){
+            socket.emit('error', 'Invalid game.');
+            return;
+        }
         if (rooms[gameId].players.length === 0)
         {
             socket.emit('error', 'Atleast one participant is required to start the game.');
@@ -89,7 +93,7 @@ export async function handleSpectatorConnection(socket: Socket, gameId: string)
             room.ongoing = false;
             socket.to(gameId).emit('message', 'Game has been ended by the trainer');
             socket.to(gameId).emit('gameOver', await leaderboard(gameId));
-            socket.to(gameId).disconnectSockets();
+            //socket.to(gameId).disconnectSockets();
             delete rooms[gameId];
         });
 

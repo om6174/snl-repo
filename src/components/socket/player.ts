@@ -173,7 +173,11 @@ export async function handlePlayerConnection(socket: Socket, gameId: string, pla
 
     socket.on('rollDice', async () =>
     {
-
+        if(!rooms[gameId])
+        {
+            socket.emit('error', "Invalid game.");
+            return;
+        };
         if (!room.ongoing)
         {
             socket.emit('error', "The game has not started yet.");
