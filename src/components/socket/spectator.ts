@@ -91,8 +91,12 @@ export async function handleSpectatorConnection(socket: Socket, gameId: string)
             console.log(`Game ${gameId} ended`);
             await updateGameStatus(gameId, GameplayStatus.FINISHED);
             room.ongoing = false;
-            socket.to(gameId).emit('message', 'Game has been ended by the trainer');
-            socket.to(gameId).emit('gameOver', await leaderboard(gameId));
+            socket.broadcast.to(gameId).emit('message', 'Game has been ended by the trainer');
+            socket.emit('message', 'You paused the game.');
+            const leaderData = await leaderboard(gameId);
+            socket.broadcast.to(gameId).emit('gameOver', leaderData);
+            socket.emit('gameOver', leaderData);
+
             //socket.to(gameId).disconnectSockets();
             delete rooms[gameId];
         });
