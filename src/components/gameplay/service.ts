@@ -35,7 +35,7 @@ export class GameplayService extends DefaultService<GameplayModel> {
         const gameplay = await this.model.getById(params.id);
         let players: any[] = [];
         if(gameplay){
-            let users = await knex('user').where({gameId: gameplay.url}).orderBy('score', 'desc', 'last').orderBy('numberOfMoves', 'asc', 'last');
+            let users = await knex('user').where({gameId: gameplay.url}).orderBy([{ column: 'score', order: 'desc' }, { column: 'numberOfMoves', order: 'asc' }]);
             users = users.map(user => {user.finishedTime = user.finishedTime - gameplay.startedAt; return user;});
             players = users;
         }

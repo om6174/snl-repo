@@ -23,7 +23,6 @@ export class GameplayModel extends DefaultModel {
         .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'trainer.name')
         .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id')
         .leftJoin('trainer', `${this.tableName}.trainerId`, 'trainer.id')
-        .orderBy([{ column: `${this.tableName}.score`, order: 'desc' }, { column: `${this.tableName}.numberOfMoves`, order: 'asc' }]);
 
         if (Object.keys(filters).length > 0) {
             for (const key in filters) {

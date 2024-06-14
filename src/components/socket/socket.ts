@@ -43,7 +43,7 @@ export async function leaderboard(gameId: string)
 {
     const records = await knex('user')
         .where({ gameId })
-        .orderBy([{ column: 'score', order: 'desc' }, { column: 'finishedTime', order: 'asc' }]);
+        .orderBy([{ column: 'score', order: 'desc' }, { column: 'numberOfMoves', order: 'asc' }]);
 
     return records;
 }
