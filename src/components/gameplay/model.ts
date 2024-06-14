@@ -22,7 +22,8 @@ export class GameplayModel extends DefaultModel {
         let query = knex(this.tableName)
         .select(`${this.tableName}.*`, 'variation.variationName', 'variation.gameType', 'variation.additionalDetails', 'trainer.name')
         .leftJoin('variation', `${this.tableName}.variationId`, 'variation.id')
-        .leftJoin('trainer', `${this.tableName}.trainerId`, 'trainer.id');
+        .leftJoin('trainer', `${this.tableName}.trainerId`, 'trainer.id')
+        .orderBy([{ column: 'score', order: 'desc' }, { column: 'finishedTime', order: 'asc' }]);
 
         if (Object.keys(filters).length > 0) {
             for (const key in filters) {
