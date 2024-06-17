@@ -35,7 +35,11 @@ app.get('/', (req,res)=>{ return res.send("Connected successfully!!!")})
 
 app.post("/upload/:fileType", upload.single("file"), (req, res) => {
   console.log(req.file)
-  return res.send(req.file?.path)
+  try{
+    return res.send(req.file?.path)
+  }catch(e){
+    console.log("error", e)
+  }
 });
 
 app.get("/download/:filePath", (req, res) => {
