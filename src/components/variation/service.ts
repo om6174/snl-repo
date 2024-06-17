@@ -12,15 +12,7 @@ export class VariationService extends DefaultService<VariationModel> {
     getAll = async ({locals, query}: ServiceType): Promise<Record<string, any>[]> => {
         let records;
 
-        records = await this.model.getAll({...query, status: VariationStatus.LIVE});
-        records.map(record=>{record.additionalDetails = JSON.parse(record.additionalDetails)});
-        return records;
-    };
-
-    getArchived = async ({locals, query}: ServiceType): Promise<Record<string, any>[]> => {
-        let records;
-
-        records = await this.model.getAll({...query, status: VariationStatus.ARCHIVED});
+        records = await this.model.getAll({status: VariationStatus.LIVE, ...query});
         records.map(record=>{record.additionalDetails = JSON.parse(record.additionalDetails)});
         return records;
     };
