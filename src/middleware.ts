@@ -81,27 +81,3 @@ export function authenticateMiddleware(allowedRoles: number[]){
         }
     }
 }
-export function authenticate(req: Request, res: Response, next: NextFunction, ) {
-    // Extract the token from the request headers
-    const token = req.headers.authorization;
-
-    // Check if token is provided
-    if (!token) {
-        return res.status(401).json({ message: 'Unauthorized: No token provided' });
-    }
-
-    try {
-        // Verify the token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any; // Verify the token using your JWT secret
-
-
-        // Attach the decoded payload to the request object
-        res.locals.user = decoded.id;
-
-        // Move to the next middleware
-        next();
-    } catch (error) {
-        // Token is invalid
-        return res.status(403).json({ message: 'Forbidden: Invalid token' });
-    }
-}

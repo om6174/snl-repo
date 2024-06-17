@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate, authenticateMiddleware, handleService } from '../../middleware';
+import { authenticateMiddleware, handleService } from '../../middleware';
 import { UserRole } from '../../enums';
 import { ValidationChain } from 'express-validator';
 import { DefaultService } from './service';

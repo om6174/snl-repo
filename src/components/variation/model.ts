@@ -33,8 +33,7 @@ export class VariationModel extends DefaultModel {
         return newRecord;
     }
     async delete(id: number): Promise<boolean> {
-        //await knex(this.tableName).where({ id }).update({status: 2});
-        await knex(this.tableName).where({ id }).delete();
+        await knex(this.tableName).where({ id }).update({status: VariationStatus.ARCHIVED});
 
         return true;
     }
