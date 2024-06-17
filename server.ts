@@ -50,7 +50,11 @@ app.get("/download/:filePath", (req, res) => {
       if (err) {
           // Handle any errors that occur during file sending
           console.error(`Error sending file: ${err}`);
-          res.status(404).send('File not found');
+          try{
+            res.status(404).send('File not found');
+          }catch(e){
+            console.log("error sending 404", e)
+          }
       }
   });
 });
